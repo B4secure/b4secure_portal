@@ -492,7 +492,7 @@ body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--t
       </div>
       <button class="copy-btn" id="copy-btn">
         <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M11 5V3a2 2 0 00-2-2H3a2 2 0 00-2 2v6a2 2 0 002 2h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-        Copy for Gamma
+        Copy
       </button>
     </div>
     <div class="results-count" id="results-count"></div>
@@ -847,9 +847,9 @@ function toggleChat() {
 }
 
 function sendChatMsg() {
-  const name = document.getElementById('chat-name').value.trim();
+  const name = localStorage.getItem('b4_note_name') || document.getElementById('chat-name').value.trim();
   const text = document.getElementById('chat-text').value.trim();
-  if (!name) { document.getElementById('chat-name').focus(); return; }
+  if (!name) { checkNamePrompt(); return; }
   if (!text) { document.getElementById('chat-text').focus(); return; }
   const msgs = loadMsgs();
   msgs.push({ name, text, ts: new Date().toISOString() });
