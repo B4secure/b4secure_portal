@@ -248,67 +248,102 @@ body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--t
   .metrics { grid-template-columns: repeat(2, 1fr); }
 }
 
-/* TEAM NOTES PANEL */
-.notes-panel {
-  background: #fff;
-  border: 1px solid rgba(201,168,76,0.2);
-  border-radius: 12px;
-  margin-bottom: 20px;
-  overflow: hidden;
+/* FLOATING TEAM CHAT */
+#chat-fab {
+  position: fixed; bottom: 28px; right: 28px; z-index: 200;
+  width: 52px; height: 52px; border-radius: 50%;
+  background: var(--emerald-deep); border: 1.5px solid var(--gold);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25); transition: transform 0.15s;
 }
-.notes-header {
-  background: var(--emerald-deep);
-  padding: 12px 18px;
+#chat-fab:hover { transform: scale(1.07); }
+#chat-fab svg { width: 22px; height: 22px; }
+#chat-notif {
+  position: absolute; top: -4px; right: -4px;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: #ef4444; border: 2px solid var(--cream);
+  font-size: 10px; color: #fff; font-weight: 600;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'DM Mono', monospace;
+  animation: notif-pulse 2s ease-in-out infinite;
+}
+#chat-notif.hidden { display: none; }
+@keyframes notif-pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.7;transform:scale(1.15)} }
+
+#chat-panel {
+  position: fixed; bottom: 90px; right: 28px; z-index: 200;
+  width: 340px; max-height: 520px;
+  background: var(--cream); border: 1px solid rgba(201,168,76,0.3);
+  border-radius: 14px; box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  display: flex; flex-direction: column; overflow: hidden;
+  transition: opacity 0.2s, transform 0.2s;
+}
+#chat-panel.hidden { opacity: 0; pointer-events: none; transform: translateY(12px); }
+
+.chat-header {
+  background: var(--emerald-deep); padding: 12px 16px;
   display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
 }
-.notes-header-title {
+.chat-header-left { display: flex; flex-direction: column; }
+.chat-title {
   font-family: 'Cormorant Garamond', serif;
-  font-size: 15px; font-weight: 500;
-  color: var(--gold-light); letter-spacing: 0.06em;
+  font-size: 15px; font-weight: 500; color: var(--gold-light); letter-spacing: 0.05em;
 }
-.notes-header-sub { font-size: 11px; color: rgba(201,168,76,0.6); }
-.notes-toggle {
-  font-size: 11px; color: rgba(201,168,76,0.7);
+.chat-sub { font-size: 10px; color: rgba(201,168,76,0.55); margin-top: 1px; }
+.chat-close {
+  background: none; border: none; color: rgba(201,168,76,0.6);
+  cursor: pointer; font-size: 18px; line-height: 1; padding: 2px 4px;
+}
+.chat-close:hover { color: var(--gold-light); }
+
+.chat-messages {
+  flex: 1; overflow-y: auto; padding: 12px;
+  display: flex; flex-direction: column; gap: 8px;
+  min-height: 200px; max-height: 320px;
+}
+.chat-msg {
+  background: #fff; border: 1px solid rgba(201,168,76,0.15);
+  border-radius: 10px; padding: 9px 12px;
+  border-left: 3px solid var(--gold); position: relative;
+}
+.chat-msg-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; justify-content: space-between; }
+.chat-msg-name { font-size: 12px; font-weight: 500; color: var(--emerald); }
+.chat-msg-time { font-size: 10px; color: var(--text3); font-family: 'DM Mono', monospace; }
+.chat-msg-text { font-size: 13px; color: var(--text); line-height: 1.5; }
+.chat-msg-del {
   background: none; border: none; cursor: pointer;
-  font-family: 'DM Mono', monospace; letter-spacing: 0.05em;
+  color: #ccc; font-size: 13px; padding: 0 2px; line-height: 1;
+  transition: color 0.15s; flex-shrink: 0;
 }
-.notes-toggle:hover { color: var(--gold-light); }
-.notes-body { padding: 14px 18px; }
-.notes-form { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
-.notes-name {
+.chat-msg-del:hover { color: #ef4444; }
+.chat-empty { text-align: center; padding: 30px 16px; color: var(--text3); font-size: 13px; }
+
+.chat-input-area {
+  border-top: 1px solid rgba(201,168,76,0.15);
+  padding: 10px 12px; flex-shrink: 0; background: #fff;
+}
+.chat-name-row { display: flex; gap: 6px; margin-bottom: 6px; }
+.chat-name-input {
+  font-family: 'Jost', sans-serif; font-size: 12px;
+  padding: 6px 10px; border: 1px solid rgba(201,168,76,0.25);
+  border-radius: 6px; outline: none; width: 110px; color: var(--text); background: #faf7f0;
+}
+.chat-name-input:focus { border-color: var(--gold); }
+.chat-msg-row { display: flex; gap: 6px; }
+.chat-text-input {
   font-family: 'Jost', sans-serif; font-size: 13px;
-  padding: 8px 12px; border: 1px solid rgba(201,168,76,0.3);
-  border-radius: 7px; outline: none; width: 130px;
-  color: var(--text); background: #faf7f0;
+  padding: 8px 10px; border: 1px solid rgba(201,168,76,0.25);
+  border-radius: 6px; outline: none; flex: 1; color: var(--text); background: #faf7f0;
 }
-.notes-name:focus { border-color: var(--gold); }
-.notes-input {
-  font-family: 'Jost', sans-serif; font-size: 13px;
-  padding: 8px 12px; border: 1px solid rgba(201,168,76,0.3);
-  border-radius: 7px; outline: none; flex: 1; min-width: 200px;
-  color: var(--text); background: #faf7f0;
-}
-.notes-input:focus { border-color: var(--gold); }
-.notes-submit {
-  font-family: 'Jost', sans-serif; font-size: 13px; font-weight: 500;
-  padding: 8px 16px; border-radius: 7px;
+.chat-text-input:focus { border-color: var(--gold); }
+.chat-send {
+  font-family: 'Jost', sans-serif; font-size: 12px; font-weight: 500;
+  padding: 8px 12px; border-radius: 6px;
   background: var(--emerald-deep); color: var(--gold-light);
-  border: 1px solid rgba(201,168,76,0.3); cursor: pointer;
-  transition: all 0.15s; white-space: nowrap;
+  border: 1px solid rgba(201,168,76,0.3); cursor: pointer; transition: all 0.15s;
 }
-.notes-submit:hover { background: var(--emerald); border-color: var(--gold); }
-.notes-list { display: flex; flex-direction: column; gap: 8px; max-height: 220px; overflow-y: auto; }
-.note-item {
-  background: #faf7f0; border: 1px solid rgba(201,168,76,0.15);
-  border-radius: 8px; padding: 10px 14px;
-  border-left: 3px solid var(--gold);
-}
-.note-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
-.note-name { font-size: 12px; font-weight: 500; color: var(--emerald); }
-.note-time { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; }
-.note-text { font-size: 13px; color: var(--text); line-height: 1.5; }
-.notes-empty { font-size: 13px; color: var(--text3); text-align: center; padding: 16px; }
-.notes-collapsed .notes-body { display: none; }
+.chat-send:hover { background: var(--emerald); }
 </style>
 </head>
 <body>
@@ -411,25 +446,6 @@ body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--t
   </div>
 
   <div class="content">
-    <div class="notes-panel" id="notes-panel">
-      <div class="notes-header">
-        <div>
-          <div class="notes-header-title">Team Log</div>
-          <div class="notes-header-sub">Shared notes visible to all team members</div>
-        </div>
-        <button class="notes-toggle" id="notes-toggle" onclick="toggleNotes()">Hide</button>
-      </div>
-      <div class="notes-body">
-        <div class="notes-form">
-          <input class="notes-name" type="text" id="note-name" placeholder="Your name" maxlength="30">
-          <input class="notes-input" type="text" id="note-text" placeholder="Add a note e.g. 'Village feed checked — nothing significant today'" maxlength="300">
-          <button class="notes-submit" onclick="addNote()">Add Note</button>
-        </div>
-        <div class="notes-list" id="notes-list">
-          <div class="notes-empty">No notes yet — be the first to add one</div>
-        </div>
-      </div>
-    </div>
     <div class="toolbar">
       <div class="search-wrap">
         <svg class="search-icon" width="15" height="15" viewBox="0 0 16 16" fill="none">
@@ -497,7 +513,7 @@ function getActiveArticles() { return feeds[activeTab] || []; }
 function getFiltered() {
   const q = document.getElementById('search').value.toLowerCase();
   return getActiveArticles().filter(a => {
-    if (activeCategory !== 'all') { const cat = (a.category && a.category !== 'undefined') ? a.category : a.search_name; if (cat !== activeCategory) return false; }
+    if (activeCategory !== 'all') { const raw = (a.category && a.category !== 'undefined' && a.category !== 'nan') ? a.category : (a.search_name||''); const cat = raw.replace(/_/g,' '); if (cat !== activeCategory) return false; }
     if (activeTab === 'village') {
       if (activeVillage !== 'all' && a.village !== activeVillage) return false;
     }
@@ -514,10 +530,10 @@ function buildSidebarFilters() {
   const articles = getActiveArticles();
 
   // Category filter — use search_name for topic/cyber, category for village
-  const cats = [...new Set(articles.map(a => (a.category && a.category !== 'undefined' ? a.category : a.search_name)).filter(Boolean))].sort();
+  const cats = [...new Set(articles.map(a => { const c = a.category && a.category !== 'undefined' && a.category !== 'nan' ? a.category : (a.search_name||''); return c.replace(/_/g,' '); }).filter(Boolean))].sort();
   const catEl = document.getElementById('cat-filters');
   catEl.innerHTML = '<button class="spill active" data-val="all">All</button>' +
-    cats.map(c => '<button class="spill" data-val="' + c + '">' + c.replace(/_/g,' ') + '</button>').join('');
+    cats.map(c => '<button class="spill" data-val="' + c + '">' + c + '</button>').join('');
   catEl.querySelectorAll('.spill').forEach(btn => {
     btn.addEventListener('click', () => {
       catEl.querySelectorAll('.spill').forEach(b => b.classList.remove('active'));
@@ -704,7 +720,6 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.getElementById('search').value = '';
     buildSidebarFilters();
     render();
-    updateNotesPanelVisibility();
   });
 });
 
@@ -736,82 +751,130 @@ document.getElementById('gate-btn').addEventListener('click', tryUnlock);
 document.getElementById('gate-input').addEventListener('keydown', e => { if (e.key === 'Enter') tryUnlock(); });
 
 
-// ── TEAM NOTES (shared via localStorage, visible to same-browser users) ──
-// For cross-device sharing, notes are stored in the portal's own storage key
-const NOTES_KEY = 'b4_portal_notes_v1';
 
-function loadNotes() {
-  try { return JSON.parse(localStorage.getItem(NOTES_KEY) || '[]'); }
-  catch { return []; }
-}
-
-function saveNotes(notes) {
-  try { localStorage.setItem(NOTES_KEY, JSON.stringify(notes)); } catch {}
-}
-
-function renderNotes() {
-  const notes = loadNotes();
-  const list  = document.getElementById('notes-list');
-  if (!notes.length) {
-    list.innerHTML = '<div class="notes-empty">No notes yet — be the first to add one</div>';
-    return;
-  }
-  list.innerHTML = notes.slice().reverse().map(n => {
-    const d = new Date(n.ts);
-    const time = d.toLocaleDateString('en-GB',{day:'numeric',month:'short'}) + ' ' +
-                 d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
-    return '<div class="note-item">' +
-      '<div class="note-meta">' +
-        '<span class="note-name">' + escHtml(n.name) + '</span>' +
-        '<span class="note-time">' + time + '</span>' +
-      '</div>' +
-      '<div class="note-text">' + escHtml(n.text) + '</div>' +
-    '</div>';
-  }).join('');
-}
+// ── FLOATING TEAM CHAT ──
+const CHAT_KEY      = 'b4_team_chat_v1';
+const CHAT_SEEN_KEY = 'b4_chat_seen_ts';
+let chatOpen = false;
 
 function escHtml(s) {
   return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
+function loadMsgs()    { try { return JSON.parse(localStorage.getItem(CHAT_KEY)||'[]'); } catch { return []; } }
+function saveMsgs(m)   { try { localStorage.setItem(CHAT_KEY, JSON.stringify(m)); } catch {} }
 
-function addNote() {
-  const name = document.getElementById('note-name').value.trim();
-  const text = document.getElementById('note-text').value.trim();
-  if (!name) { document.getElementById('note-name').focus(); return; }
-  if (!text) { document.getElementById('note-text').focus(); return; }
-  const notes = loadNotes();
-  notes.push({ name, text, ts: new Date().toISOString() });
-  if (notes.length > 100) notes.splice(0, notes.length - 100);
-  saveNotes(notes);
-  document.getElementById('note-text').value = '';
-  renderNotes();
+function renderChat() {
+  const msgs = loadMsgs();
+  const el   = document.getElementById('chat-messages');
+  if (!msgs.length) { el.innerHTML = '<div class="chat-empty">No messages yet</div>'; return; }
+  el.innerHTML = msgs.slice().reverse().map((m, ri) => {
+    const i = msgs.length - 1 - ri;
+    const d = new Date(m.ts);
+    const time = d.toLocaleDateString('en-GB',{day:'numeric',month:'short'}) + ' ' +
+                 d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+    return '<div class="chat-msg">' +
+      '<div class="chat-msg-meta">' +
+        '<div style="display:flex;align-items:center;gap:8px">' +
+          '<span class="chat-msg-name">' + escHtml(m.name) + '</span>' +
+          '<span class="chat-msg-time">' + time + '</span>' +
+        '</div>' +
+        '<button class="chat-msg-del" onclick="deleteMsg(' + i + ')" title="Delete">✕</button>' +
+      '</div>' +
+      '<div class="chat-msg-text">' + escHtml(m.text) + '</div>' +
+    '</div>';
+  }).join('');
 }
 
-function toggleNotes() {
-  const panel  = document.getElementById('notes-panel');
-  const toggle = document.getElementById('notes-toggle');
-  const collapsed = panel.classList.toggle('notes-collapsed');
-  toggle.textContent = collapsed ? 'Show' : 'Hide';
+function updateNotif() {
+  const msgs    = loadMsgs();
+  const seenTs  = localStorage.getItem(CHAT_SEEN_KEY) || '0';
+  const unseen  = msgs.filter(m => m.ts > seenTs).length;
+  const notif   = document.getElementById('chat-notif');
+  if (unseen > 0 && !chatOpen) {
+    notif.textContent = unseen > 9 ? '9+' : unseen;
+    notif.classList.remove('hidden');
+  } else {
+    notif.classList.add('hidden');
+  }
 }
 
-document.getElementById('note-text').addEventListener('keydown', e => {
-  if (e.key === 'Enter') addNote();
+function markSeen() {
+  localStorage.setItem(CHAT_SEEN_KEY, new Date().toISOString());
+  updateNotif();
+}
+
+function toggleChat() {
+  chatOpen = !chatOpen;
+  document.getElementById('chat-panel').classList.toggle('hidden', !chatOpen);
+  if (chatOpen) { renderChat(); markSeen(); }
+}
+
+function sendChatMsg() {
+  const name = document.getElementById('chat-name').value.trim();
+  const text = document.getElementById('chat-text').value.trim();
+  if (!name) { document.getElementById('chat-name').focus(); return; }
+  if (!text) { document.getElementById('chat-text').focus(); return; }
+  const msgs = loadMsgs();
+  msgs.push({ name, text, ts: new Date().toISOString() });
+  if (msgs.length > 200) msgs.splice(0, msgs.length - 200);
+  saveMsgs(msgs);
+  document.getElementById('chat-text').value = '';
+  renderChat();
+  markSeen();
+}
+
+function deleteMsg(i) {
+  const msgs = loadMsgs();
+  msgs.splice(i, 1);
+  saveMsgs(msgs);
+  renderChat();
+  updateNotif();
+}
+
+document.getElementById('chat-text').addEventListener('keydown', e => {
+  if (e.key === 'Enter') sendChatMsg();
 });
 
-// Restore saved name
-const savedName = localStorage.getItem('b4_note_name');
-if (savedName) document.getElementById('note-name').value = savedName;
-document.getElementById('note-name').addEventListener('change', e => {
+const savedChatName = localStorage.getItem('b4_note_name');
+if (savedChatName) document.getElementById('chat-name').value = savedChatName;
+document.getElementById('chat-name').addEventListener('change', e => {
   localStorage.setItem('b4_note_name', e.target.value);
 });
 
-// Only show notes panel on village tab
-function updateNotesPanelVisibility() {
-  const panel = document.getElementById('notes-panel');
-  if (panel) panel.style.display = activeTab === 'village' ? '' : 'none';
-}
+// Check for new messages every 30 seconds
+setInterval(() => { if (!chatOpen) updateNotif(); }, 30000);
+updateNotif();
 
-if (checkGate()) { renderNotes(); init(); } else { document.addEventListener("b4-authed", () => { renderNotes(); }); }
+if (checkGate()) init();
 </script>
+
+<!-- FLOATING TEAM CHAT -->
+<button id="chat-fab" onclick="toggleChat()" title="Team Chat">
+  <svg viewBox="0 0 24 24" fill="none" stroke="var(--gold-light)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+  </svg>
+  <div id="chat-notif" class="hidden">0</div>
+</button>
+
+<div id="chat-panel" class="hidden">
+  <div class="chat-header">
+    <div class="chat-header-left">
+      <div class="chat-title">Team Log</div>
+      <div class="chat-sub">Village feed · shared notes</div>
+    </div>
+    <button class="chat-close" onclick="toggleChat()">×</button>
+  </div>
+  <div class="chat-messages" id="chat-messages"></div>
+  <div class="chat-input-area">
+    <div class="chat-name-row">
+      <input class="chat-name-input" id="chat-name" type="text" placeholder="Your name" maxlength="30">
+    </div>
+    <div class="chat-msg-row">
+      <input class="chat-text-input" id="chat-text" type="text" placeholder="Add a note…" maxlength="300">
+      <button class="chat-send" onclick="sendChatMsg()">Send</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
