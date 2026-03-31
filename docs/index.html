@@ -247,6 +247,68 @@ body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--t
   .main-wrap { margin-left: 0; }
   .metrics { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* TEAM NOTES PANEL */
+.notes-panel {
+  background: #fff;
+  border: 1px solid rgba(201,168,76,0.2);
+  border-radius: 12px;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+.notes-header {
+  background: var(--emerald-deep);
+  padding: 12px 18px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.notes-header-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 15px; font-weight: 500;
+  color: var(--gold-light); letter-spacing: 0.06em;
+}
+.notes-header-sub { font-size: 11px; color: rgba(201,168,76,0.6); }
+.notes-toggle {
+  font-size: 11px; color: rgba(201,168,76,0.7);
+  background: none; border: none; cursor: pointer;
+  font-family: 'DM Mono', monospace; letter-spacing: 0.05em;
+}
+.notes-toggle:hover { color: var(--gold-light); }
+.notes-body { padding: 14px 18px; }
+.notes-form { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+.notes-name {
+  font-family: 'Jost', sans-serif; font-size: 13px;
+  padding: 8px 12px; border: 1px solid rgba(201,168,76,0.3);
+  border-radius: 7px; outline: none; width: 130px;
+  color: var(--text); background: #faf7f0;
+}
+.notes-name:focus { border-color: var(--gold); }
+.notes-input {
+  font-family: 'Jost', sans-serif; font-size: 13px;
+  padding: 8px 12px; border: 1px solid rgba(201,168,76,0.3);
+  border-radius: 7px; outline: none; flex: 1; min-width: 200px;
+  color: var(--text); background: #faf7f0;
+}
+.notes-input:focus { border-color: var(--gold); }
+.notes-submit {
+  font-family: 'Jost', sans-serif; font-size: 13px; font-weight: 500;
+  padding: 8px 16px; border-radius: 7px;
+  background: var(--emerald-deep); color: var(--gold-light);
+  border: 1px solid rgba(201,168,76,0.3); cursor: pointer;
+  transition: all 0.15s; white-space: nowrap;
+}
+.notes-submit:hover { background: var(--emerald); border-color: var(--gold); }
+.notes-list { display: flex; flex-direction: column; gap: 8px; max-height: 220px; overflow-y: auto; }
+.note-item {
+  background: #faf7f0; border: 1px solid rgba(201,168,76,0.15);
+  border-radius: 8px; padding: 10px 14px;
+  border-left: 3px solid var(--gold);
+}
+.note-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.note-name { font-size: 12px; font-weight: 500; color: var(--emerald); }
+.note-time { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; }
+.note-text { font-size: 13px; color: var(--text); line-height: 1.5; }
+.notes-empty { font-size: 13px; color: var(--text3); text-align: center; padding: 16px; }
+.notes-collapsed .notes-body { display: none; }
 </style>
 </head>
 <body>
@@ -349,6 +411,25 @@ body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--t
   </div>
 
   <div class="content">
+    <div class="notes-panel" id="notes-panel">
+      <div class="notes-header">
+        <div>
+          <div class="notes-header-title">Team Log</div>
+          <div class="notes-header-sub">Shared notes visible to all team members</div>
+        </div>
+        <button class="notes-toggle" id="notes-toggle" onclick="toggleNotes()">Hide</button>
+      </div>
+      <div class="notes-body">
+        <div class="notes-form">
+          <input class="notes-name" type="text" id="note-name" placeholder="Your name" maxlength="30">
+          <input class="notes-input" type="text" id="note-text" placeholder="Add a note e.g. 'Village feed checked — nothing significant today'" maxlength="300">
+          <button class="notes-submit" onclick="addNote()">Add Note</button>
+        </div>
+        <div class="notes-list" id="notes-list">
+          <div class="notes-empty">No notes yet — be the first to add one</div>
+        </div>
+      </div>
+    </div>
     <div class="toolbar">
       <div class="search-wrap">
         <svg class="search-icon" width="15" height="15" viewBox="0 0 16 16" fill="none">
@@ -626,6 +707,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.getElementById('search').value = '';
     buildSidebarFilters();
     render();
+    updateNotesPanelVisibility();
   });
 });
 
@@ -656,7 +738,83 @@ function tryUnlock() {
 document.getElementById('gate-btn').addEventListener('click', tryUnlock);
 document.getElementById('gate-input').addEventListener('keydown', e => { if (e.key === 'Enter') tryUnlock(); });
 
-if (checkGate()) init();
+
+// ── TEAM NOTES (shared via localStorage, visible to same-browser users) ──
+// For cross-device sharing, notes are stored in the portal's own storage key
+const NOTES_KEY = 'b4_portal_notes_v1';
+
+function loadNotes() {
+  try { return JSON.parse(localStorage.getItem(NOTES_KEY) || '[]'); }
+  catch { return []; }
+}
+
+function saveNotes(notes) {
+  try { localStorage.setItem(NOTES_KEY, JSON.stringify(notes)); } catch {}
+}
+
+function renderNotes() {
+  const notes = loadNotes();
+  const list  = document.getElementById('notes-list');
+  if (!notes.length) {
+    list.innerHTML = '<div class="notes-empty">No notes yet — be the first to add one</div>';
+    return;
+  }
+  list.innerHTML = notes.slice().reverse().map(n => {
+    const d = new Date(n.ts);
+    const time = d.toLocaleDateString('en-GB',{day:'numeric',month:'short'}) + ' ' +
+                 d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+    return '<div class="note-item">' +
+      '<div class="note-meta">' +
+        '<span class="note-name">' + escHtml(n.name) + '</span>' +
+        '<span class="note-time">' + time + '</span>' +
+      '</div>' +
+      '<div class="note-text">' + escHtml(n.text) + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function escHtml(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function addNote() {
+  const name = document.getElementById('note-name').value.trim();
+  const text = document.getElementById('note-text').value.trim();
+  if (!name) { document.getElementById('note-name').focus(); return; }
+  if (!text) { document.getElementById('note-text').focus(); return; }
+  const notes = loadNotes();
+  notes.push({ name, text, ts: new Date().toISOString() });
+  if (notes.length > 100) notes.splice(0, notes.length - 100);
+  saveNotes(notes);
+  document.getElementById('note-text').value = '';
+  renderNotes();
+}
+
+function toggleNotes() {
+  const panel  = document.getElementById('notes-panel');
+  const toggle = document.getElementById('notes-toggle');
+  const collapsed = panel.classList.toggle('notes-collapsed');
+  toggle.textContent = collapsed ? 'Show' : 'Hide';
+}
+
+document.getElementById('note-text').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addNote();
+});
+
+// Restore saved name
+const savedName = localStorage.getItem('b4_note_name');
+if (savedName) document.getElementById('note-name').value = savedName;
+document.getElementById('note-name').addEventListener('change', e => {
+  localStorage.setItem('b4_note_name', e.target.value);
+});
+
+// Only show notes panel on village tab
+function updateNotesPanelVisibility() {
+  const panel = document.getElementById('notes-panel');
+  if (panel) panel.style.display = activeTab === 'village' ? '' : 'none';
+}
+
+if (checkGate()) { renderNotes(); init(); } else { document.addEventListener("b4-authed", () => { renderNotes(); }); }
 </script>
 </body>
 </html>
