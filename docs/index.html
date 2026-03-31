@@ -52,23 +52,23 @@ body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--t
   text-transform: uppercase; text-align: center;
 }
 .sidebar-logo-sub {
-  font-size: 10px; font-weight: 300;
-  color: rgba(201,168,76,0.45); letter-spacing: 0.2em;
+  font-size: 11px; font-weight: 300;
+  color: rgba(201,168,76,0.7); letter-spacing: 0.18em;
   text-transform: uppercase; margin-top: 3px; text-align: center;
 }
 
 .sidebar-section { padding: 18px 16px 0; }
 .sidebar-section-label {
-  font-size: 10px; font-weight: 500;
-  color: rgba(201,168,76,0.4); letter-spacing: 0.25em;
+  font-size: 11px; font-weight: 500;
+  color: rgba(201,168,76,0.7); letter-spacing: 0.2em;
   text-transform: uppercase; margin-bottom: 8px;
   padding-bottom: 5px; border-bottom: 1px solid rgba(201,168,76,0.1);
 }
 .sidebar-pills { display: flex; flex-direction: column; gap: 2px; margin-bottom: 18px; }
 .spill {
-  font-family: 'Jost', sans-serif; font-size: 13px; font-weight: 400;
-  padding: 7px 12px; border-radius: 6px; border: 1px solid transparent;
-  background: transparent; color: rgba(242,237,216,0.6);
+  font-family: 'Jost', sans-serif; font-size: 14px; font-weight: 400;
+  padding: 8px 12px; border-radius: 6px; border: 1px solid transparent;
+  background: transparent; color: rgba(242,237,216,0.85);
   cursor: pointer; transition: all 0.15s; text-align: left; width: 100%;
 }
 .spill:hover { background: rgba(201,168,76,0.08); color: var(--gold-pale); }
@@ -79,11 +79,11 @@ body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--t
   border-top: 1px solid rgba(201,168,76,0.1);
 }
 .stat-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 7px; }
-.stat-label { font-size: 10px; color: rgba(201,168,76,0.4); letter-spacing: 0.1em; text-transform: uppercase; }
-.stat-value { font-size: 13px; color: var(--gold-light); font-family: 'DM Mono', monospace; }
+.stat-label { font-size: 11px; color: rgba(201,168,76,0.65); letter-spacing: 0.1em; text-transform: uppercase; }
+.stat-value { font-size: 14px; color: var(--gold-light); font-family: 'DM Mono', monospace; }
 .live-indicator { display: flex; align-items: center; gap: 6px; margin-top: 10px; }
 .live-dot { width: 6px; height: 6px; border-radius: 50%; background: #4ade80; animation: pulse 2s ease-in-out infinite; }
-.live-text { font-size: 10px; color: rgba(201,168,76,0.5); letter-spacing: 0.08em; font-family: 'DM Mono', monospace; }
+.live-text { font-size: 11px; color: rgba(201,168,76,0.7); letter-spacing: 0.08em; font-family: 'DM Mono', monospace; }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
 /* MAIN */
@@ -97,10 +97,10 @@ body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--t
 }
 .topbar-title {
   font-family: 'Cormorant Garamond', serif;
-  font-size: 13px; font-weight: 400;
-  color: rgba(242,237,216,0.55); letter-spacing: 0.06em;
+  font-size: 16px; font-weight: 500;
+  color: rgba(242,237,216,0.92); letter-spacing: 0.04em;
 }
-.topbar-sub { font-size: 10px; color: rgba(201,168,76,0.4); letter-spacing: 0.08em; margin-top: 1px; }
+.topbar-sub { font-size: 12px; color: rgba(201,168,76,0.65); letter-spacing: 0.06em; margin-top: 2px; }
 
 /* METRICS */
 .metrics {
@@ -110,9 +110,9 @@ body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--t
 }
 .metric { padding: 16px 22px; border-right: 1px solid rgba(201,168,76,0.1); }
 .metric:last-child { border-right: none; }
-.metric-label { font-size: 10px; font-weight: 500; color: rgba(201,168,76,0.4); text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 5px; }
+.metric-label { font-size: 11px; font-weight: 500; color: rgba(201,168,76,0.7); text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 5px; }
 .metric-value { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 300; color: var(--gold-light); line-height: 1; }
-.metric-sub { font-size: 11px; color: rgba(201,168,76,0.4); margin-top: 3px; }
+.metric-sub { font-size: 12px; color: rgba(201,168,76,0.65); margin-top: 3px; }
 
 /* TABS */
 .tabs-bar {
@@ -180,7 +180,7 @@ body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--t
 .copy-btn:hover { background: var(--emerald); border-color: var(--gold); }
 .copy-btn.copied { background: var(--gold); color: var(--emerald-deep); border-color: var(--gold); }
 
-.results-count { font-size: 12px; color: var(--text3); margin-bottom: 12px; letter-spacing: 0.04em; }
+.results-count { font-size: 13px; color: var(--text3); margin-bottom: 12px; letter-spacing: 0.04em; }
 .articles { display: flex; flex-direction: column; gap: 5px; }
 
 /* ARTICLE CARDS */
@@ -194,7 +194,7 @@ body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--t
 .article-card:hover { border-color: rgba(201,168,76,0.35); box-shadow: 0 3px 12px rgba(26,72,46,0.08); transform: translateY(-1px); }
 
 .article-tags { display: flex; align-items: center; gap: 5px; margin-bottom: 6px; flex-wrap: wrap; }
-.tag { font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 4px; white-space: nowrap; }
+.tag { font-size: 12px; font-weight: 500; padding: 3px 9px; border-radius: 4px; white-space: nowrap; }
 .tag-feed-village  { background: #e8f5ee; color: #1a5c38; border: 1px solid #a8d5bc; }
 .tag-feed-topic    { background: #eef2ff; color: #3730a3; border: 1px solid #a5b4fc; }
 .tag-feed-cyber    { background: #fff1f2; color: #881337; border: 1px solid #fda4af; }
@@ -203,13 +203,13 @@ body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--t
 .tag-country       { background: #f5f5f5; color: #555;    border: 1px solid #ddd; }
 .tag-lang          { background: #f0f4ff; color: #3a4a8a; border: 1px solid #c0caee; font-family: 'DM Mono', monospace; }
 
-.article-title { font-size: 14px; font-weight: 500; line-height: 1.5; color: var(--text); margin-bottom: 3px; }
+.article-title { font-size: 15px; font-weight: 500; line-height: 1.5; color: var(--text); margin-bottom: 3px; }
 .article-title-orig { font-size: 12px; color: var(--text3); font-style: italic; margin-bottom: 4px; line-height: 1.4; }
 .article-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 3px; }
-.article-source { font-size: 11px; color: var(--text3); }
+.article-source { font-size: 12px; color: var(--text3); }
 .article-dot    { font-size: 9px; color: #ccc; }
-.article-date   { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; }
-.article-time   { font-size: 11px; color: var(--gold); font-family: 'DM Mono', monospace; }
+.article-date   { font-size: 12px; color: var(--text3); font-family: 'DM Mono', monospace; }
+.article-time   { font-size: 12px; color: var(--gold); font-family: 'DM Mono', monospace; }
 
 .empty { text-align: center; padding: 60px 20px; color: var(--text3); }
 .empty-title { font-family: 'Cormorant Garamond', serif; font-size: 20px; color: var(--text2); margin-bottom: 8px; }
@@ -370,7 +370,7 @@ body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--t
 <script>
 // ─────────────────────────────────────────────────────────────────
 // SET YOUR PASSWORD HERE
-const FEED_PASSWORD = 'b4feeds';
+const FEED_PASSWORD = 'changeme';
 // ─────────────────────────────────────────────────────────────────
 
 // ─────────────────────────────────────────────────────────────────
@@ -417,7 +417,7 @@ function getActiveArticles() { return feeds[activeTab] || []; }
 function getFiltered() {
   const q = document.getElementById('search').value.toLowerCase();
   return getActiveArticles().filter(a => {
-    if (activeCategory !== 'all' && (a.category || a.search_name) !== activeCategory) return false;
+    if (activeCategory !== 'all') { const cat = (a.category && a.category !== 'undefined') ? a.category : a.search_name; if (cat !== activeCategory) return false; }
     if (activeTab === 'village') {
       if (activeVillage !== 'all' && a.village !== activeVillage) return false;
       if (activeCountry !== 'all' && a.country !== activeCountry) return false;
@@ -435,7 +435,7 @@ function buildSidebarFilters() {
   const articles = getActiveArticles();
 
   // Category filter — use search_name for topic/cyber, category for village
-  const cats = [...new Set(articles.map(a => a.category || a.search_name).filter(Boolean))].sort();
+  const cats = [...new Set(articles.map(a => (a.category && a.category !== 'undefined' ? a.category : a.search_name)).filter(Boolean))].sort();
   const catEl = document.getElementById('cat-filters');
   catEl.innerHTML = '<button class="spill active" data-val="all">All</button>' +
     cats.map(c => '<button class="spill" data-val="' + c + '">' + c.replace(/_/g,' ') + '</button>').join('');
