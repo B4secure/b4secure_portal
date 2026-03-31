@@ -104,7 +104,7 @@ body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--t
 
 /* METRICS */
 .metrics {
-  display: grid; grid-template-columns: repeat(4, 1fr);
+  display: grid; grid-template-columns: repeat(5, 1fr);
   background: var(--emerald-deep);
   border-bottom: 1px solid rgba(201,168,76,0.15);
 }
@@ -448,9 +448,14 @@ body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--t
       <div class="metric-sub" id="m-village-sub">Loading…</div>
     </div>
     <div class="metric">
-      <div class="metric-label">Topic articles</div>
-      <div class="metric-value" id="m-topic">—</div>
-      <div class="metric-sub" id="m-topic-sub">Loading…</div>
+      <div class="metric-label">Topic daily</div>
+      <div class="metric-value" id="m-topic_daily">—</div>
+      <div class="metric-sub" id="m-topic_daily-sub">Loading…</div>
+    </div>
+    <div class="metric" style="border-left:1px solid rgba(201,168,76,0.1)">
+      <div class="metric-label">Topic weekly</div>
+      <div class="metric-value" id="m-topic_weekly">—</div>
+      <div class="metric-sub" id="m-topic_weekly-sub">Loading…</div>
     </div>
     <div class="metric">
       <div class="metric-label">Cyber articles</div>
@@ -468,9 +473,14 @@ body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--t
     <button class="tab-btn active" data-tab="village">
       Village Feed <span class="tab-badge" id="badge-village">0</span>
     </button>
-    <button class="tab-btn" data-tab="topic">
-      Topic Feed <span class="tab-badge" id="badge-topic">0</span>
-    </button>
+    <div style="display:flex;flex-direction:column;gap:2px">
+      <button class="tab-btn" data-tab="topic_daily" style="border-radius:8px 8px 0 0;font-size:12px;padding:7px 16px">
+        Topic · Daily <span class="tab-badge" id="badge-topic_daily">0</span>
+      </button>
+      <button class="tab-btn" data-tab="topic_weekly" style="border-radius:0;font-size:12px;padding:7px 16px">
+        Topic · Weekly <span class="tab-badge" id="badge-topic_weekly">0</span>
+      </button>
+    </div>
     <button class="tab-btn" data-tab="cyber">
       Cyber Feed <span class="tab-badge" id="badge-cyber">0</span>
     </button>
@@ -504,25 +514,33 @@ body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--t
 // ─────────────────────────────────────────────────────────────────
 // SET YOUR PASSWORD HERE
 const FEED_PASSWORD = 'b4feeds';
+
+// ─────────────────────────────────────────────────────────────────
+// JSONBIN CONFIG — paste your key and bin ID here
+const JSONBIN_API_KEY = '$2a$10$f1mvpURB/E8w06pcDFlp9O9ks7U9gl8DUrdIQwDu7kE.L1CiHA4Wa';
+const JSONBIN_BIN_ID  = '69cbd79736566621a866ee80 ';
+// ─────────────────────────────────────────────────────────────────
 // ─────────────────────────────────────────────────────────────────
 
 // ─────────────────────────────────────────────────────────────────
 // FEED URLS — update these to match your actual GitHub Pages URLs
 const FEEDS = {
-  village: 'https://b4secure.github.io/actions-test/feed.json',
-  topic:   'https://b4secure.github.io/Topic_feed/feed.json',
-  cyber:   'https://b4secure.github.io/cyber_feed/feed.json',
+  village:      'https://b4secure.github.io/actions-test/feed.json',
+  topic_daily:  'https://b4secure.github.io/Topic_feed/daily_feed.json',
+  topic_weekly: 'https://b4secure.github.io/Topic_feed/weekly_feed.json',
+  cyber:        'https://b4secure.github.io/cyber_feed/feed.json',
 };
 // ─────────────────────────────────────────────────────────────────
 
 const SESSION_KEY = 'b4_portal_auth';
-const FEED_BORDER = { village: '#22c55e', topic: '#6366f1', cyber: '#f43f5e' };
-const FEED_LABEL  = { village: 'Village', topic: 'Topic', cyber: 'Cyber' };
-const FEED_TAG_CLASS = { village: 'tag-feed-village', topic: 'tag-feed-topic', cyber: 'tag-feed-cyber' };
+const FEED_BORDER = { village: '#22c55e', topic_daily: '#6366f1', topic_weekly: '#4f46e5', cyber: '#f43f5e' };
+const FEED_LABEL  = { village: 'Village', topic_daily: 'Topic · Daily', topic_weekly: 'Topic · Weekly', cyber: 'Cyber' };
+const FEED_TAG_CLASS = { village: 'tag-feed-village', topic_daily: 'tag-feed-topic', topic_weekly: 'tag-feed-topic', cyber: 'tag-feed-cyber' };
 
-let feeds = { village: [], topic: [], cyber: [] };
-let feedStatus = { village: 'loading', topic: 'loading', cyber: 'loading' };
+let feeds = { village: [], topic_daily: [], topic_weekly: [], cyber: [] };
+let feedStatus = { village: 'loading', topic_daily: 'loading', topic_weekly: 'loading', cyber: 'loading' };
 let activeTab = 'village';
+let activeTopicTab = 'topic_daily';
 let activeCategory = 'all';
 let activeVillage  = 'all';
 
@@ -550,9 +568,6 @@ function getFiltered() {
   const q = document.getElementById('search').value.toLowerCase();
   return getActiveArticles().filter(a => {
     if (activeCategory !== 'all') { const raw = (a.category && a.category !== 'undefined' && a.category !== 'nan') ? a.category : (a.search_name||''); const cat = raw.replace(/_/g,' '); if (cat !== activeCategory) return false; }
-    if (activeTab === 'village') {
-      if (activeVillage !== 'all' && a.village !== activeVillage) return false;
-    }
     if (q) {
       const title = (a.title_en || a.title || '').toLowerCase();
       if (!title.includes(q) && !(a.village||'').toLowerCase().includes(q) &&
@@ -578,31 +593,7 @@ function buildSidebarFilters() {
   });
 
   // Village + Country filters (only for village tab)
-  const vLabel = document.getElementById('village-label');
-  const vEl    = document.getElementById('village-filters');
-  const cEl    = document.getElementById('country-filters');
-
-  if (activeTab === 'village') {
-    vLabel.style.display = '';
-    const villages  = [...new Set(articles.map(a=>a.village).filter(Boolean))].sort();
-    const countries = [...new Set(articles.map(a=>a.country).filter(Boolean))].sort();
-
-    function makePills(el, items, active, setActive) {
-      el.innerHTML = '<button class="spill active" data-val="all">All</button>' +
-        items.map(v => '<button class="spill" data-val="' + v + '">' + v + '</button>').join('');
-      el.querySelectorAll('.spill').forEach(btn => {
-        btn.addEventListener('click', () => {
-          el.querySelectorAll('.spill').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active'); setActive(btn.dataset.val); render();
-        });
-      });
-    }
-    makePills(vEl, villages,  () => activeVillage, v => activeVillage = v);
-    makePills(cEl, countries, () => activeCountry, v => activeCountry = v);
-  } else {
-    vLabel.style.display = 'none';
-    vEl.innerHTML = ''; cEl.innerHTML = '';
-  }
+  // village/country filters removed from portal
 }
 
 function render() {
@@ -684,9 +675,9 @@ function copyForGamma() {
 
 function updateFeedStatus() {
   const statusEl = document.getElementById('feed-status');
-  const allDone  = Object.values(feedStatus).every(s => s !== 'loading');
-  const anyError = Object.values(feedStatus).some(s => s === 'error');
-  const errors   = Object.entries(feedStatus).filter(([,v]) => v === 'error').map(([k]) => FEED_LABEL[k]);
+  const allDone  = Object.entries(feedStatus).every(([k,v]) => v !== 'loading');
+  const anyError = ['village','topic_daily','cyber'].some(k => feedStatus[k] === 'error');
+  const errors   = Object.entries(feedStatus).filter(([,v]) => v === 'error').map(([k]) => FEED_LABEL[k] || k);
 
   if (!allDone) {
     statusEl.innerHTML = '<div class="status-dot status-loading"></div><span style="color:rgba(242,237,216,0.85)">Loading feeds…</span>';
@@ -697,25 +688,27 @@ function updateFeedStatus() {
   }
 
   // Update metrics
-  const total = Object.values(feeds).reduce((s, a) => s + a.length, 0);
-  document.getElementById('m-village').textContent = feeds.village.length || '—';
-  document.getElementById('m-topic').textContent   = feeds.topic.length   || '—';
-  document.getElementById('m-cyber').textContent   = feeds.cyber.length   || '—';
-  document.getElementById('m-total').textContent   = total || '—';
-  document.getElementById('m-updated').textContent = 'Updated ' + new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+  const total = feeds.village.length + feeds.topic_daily.length + feeds.topic_weekly.length + feeds.cyber.length;
+  document.getElementById('m-village').textContent      = feeds.village.length      || '—';
+  document.getElementById('m-topic_daily').textContent  = feeds.topic_daily.length  || '—';
+  document.getElementById('m-topic_weekly').textContent = feeds.topic_weekly.length || '—';
+  document.getElementById('m-cyber').textContent        = feeds.cyber.length        || '—';
+  document.getElementById('m-total').textContent        = total || '—';
+  document.getElementById('m-updated').textContent      = 'Updated ' + new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
 
-  // Update tab badges
-  document.getElementById('badge-village').textContent = feeds.village.length;
-  document.getElementById('badge-topic').textContent   = feeds.topic.length;
-  document.getElementById('badge-cyber').textContent   = feeds.cyber.length;
+  document.getElementById('badge-village').textContent     = feeds.village.length;
+  document.getElementById('badge-topic_daily').textContent  = feeds.topic_daily.length;
+  document.getElementById('badge-topic_weekly').textContent = feeds.topic_weekly.length;
+  document.getElementById('badge-cyber').textContent       = feeds.cyber.length;
 
-  // Status subs
-  const vsub = feedStatus.village === 'error' ? 'Unavailable' : (feeds.village[0] ? timeAgo(feeds.village[0].published) : '—');
-  const tsub = feedStatus.topic   === 'error' ? 'Unavailable' : (feeds.topic[0]   ? timeAgo(feeds.topic[0].published)   : '—');
-  const csub = feedStatus.cyber   === 'error' ? 'Not set up'  : (feeds.cyber[0]   ? timeAgo(feeds.cyber[0].published)   : '—');
-  document.getElementById('m-village-sub').textContent = vsub;
-  document.getElementById('m-topic-sub').textContent   = tsub;
-  document.getElementById('m-cyber-sub').textContent   = csub;
+  const vsub  = feedStatus.village      === 'error' ? 'Unavailable' : (feeds.village[0]      ? timeAgo(feeds.village[0].published)      : '—');
+  const tdsub = feedStatus.topic_daily  === 'error' ? 'Unavailable' : (feeds.topic_daily[0]  ? timeAgo(feeds.topic_daily[0].published)  : '—');
+  const twsub = feedStatus.topic_weekly === 'error' ? 'Not yet run' : (feeds.topic_weekly[0] ? timeAgo(feeds.topic_weekly[0].published) : '—');
+  const csub  = feedStatus.cyber        === 'error' ? 'Not set up'  : (feeds.cyber[0]        ? timeAgo(feeds.cyber[0].published)        : '—');
+  document.getElementById('m-village-sub').textContent      = vsub;
+  document.getElementById('m-topic_daily-sub').textContent  = tdsub;
+  document.getElementById('m-topic_weekly-sub').textContent = twsub;
+  document.getElementById('m-cyber-sub').textContent        = csub;
 
   document.getElementById('s-time').textContent = 'Live · ' + new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) + ' UTC';
 }
@@ -739,9 +732,10 @@ async function loadFeed(key, url) {
 async function init() {
   // Load all feeds in parallel
   await Promise.all([
-    loadFeed('village', FEEDS.village),
-    loadFeed('topic',   FEEDS.topic),
-    loadFeed('cyber',   FEEDS.cyber),
+    loadFeed('village',      FEEDS.village),
+    loadFeed('topic_daily',  FEEDS.topic_daily),
+    loadFeed('topic_weekly', FEEDS.topic_weekly),
+    loadFeed('cyber',        FEEDS.cyber),
   ]);
   buildSidebarFilters();
   render();
@@ -754,6 +748,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.classList.add('active');
     activeTab = btn.dataset.tab;
     activeCategory = 'all'; activeVillage = 'all';
+    if (activeTab === 'topic_daily' || activeTab === 'topic_weekly') activeTopicTab = activeTab;
     document.getElementById('search').value = '';
     buildSidebarFilters();
     render();
@@ -789,21 +784,44 @@ document.getElementById('gate-input').addEventListener('keydown', e => { if (e.k
 
 
 
-// ── FLOATING TEAM CHAT ──
-const CHAT_KEY      = 'b4_team_chat_v1';
+// ── FLOATING TEAM CHAT (JSONBin shared storage) ──
+const JSONBIN_URL   = 'https://api.jsonbin.io/v3/b/' + JSONBIN_BIN_ID;
 const CHAT_SEEN_KEY = 'b4_chat_seen_ts';
-let chatOpen = false;
+let chatOpen   = false;
+let cachedMsgs = [];
 
 function escHtml(s) {
   return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
-function loadMsgs()    { try { return JSON.parse(localStorage.getItem(CHAT_KEY)||'[]'); } catch { return []; } }
-function saveMsgs(m)   { try { localStorage.setItem(CHAT_KEY, JSON.stringify(m)); } catch {} }
 
-function renderChat() {
-  const msgs = loadMsgs();
+async function loadMsgs() {
+  try {
+    const res  = await fetch(JSONBIN_URL + '/latest', {
+      headers: { 'X-Master-Key': JSONBIN_API_KEY }
+    });
+    const data = await res.json();
+    cachedMsgs = data.record.messages || [];
+  } catch(e) { console.warn('Chat load failed:', e); }
+  return cachedMsgs;
+}
+
+async function saveMsgs(msgs) {
+  try {
+    await fetch(JSONBIN_URL, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Master-Key': JSONBIN_API_KEY
+      },
+      body: JSON.stringify({ messages: msgs })
+    });
+  } catch(e) { console.warn('Chat save failed:', e); }
+}
+
+function renderChatFromCache() {
+  const msgs = cachedMsgs;
   const el   = document.getElementById('chat-messages');
-  if (!msgs.length) { el.innerHTML = '<div class="chat-empty">No messages yet</div>'; return; }
+  if (!msgs.length) { el.innerHTML = '<div class="chat-empty">No messages yet — be the first to add one</div>'; return; }
   el.innerHTML = msgs.slice().reverse().map((m, ri) => {
     const i = msgs.length - 1 - ri;
     const d = new Date(m.ts);
@@ -822,11 +840,17 @@ function renderChat() {
   }).join('');
 }
 
-function updateNotif() {
-  const msgs    = loadMsgs();
-  const seenTs  = localStorage.getItem(CHAT_SEEN_KEY) || '0';
-  const unseen  = msgs.filter(m => m.ts > seenTs).length;
-  const notif   = document.getElementById('chat-notif');
+async function renderChat() {
+  document.getElementById('chat-messages').innerHTML = '<div class="chat-empty">Loading messages…</div>';
+  await loadMsgs();
+  renderChatFromCache();
+}
+
+async function updateNotif() {
+  await loadMsgs();
+  const seenTs = localStorage.getItem(CHAT_SEEN_KEY) || '0';
+  const unseen = cachedMsgs.filter(m => m.ts > seenTs).length;
+  const notif  = document.getElementById('chat-notif');
   if (unseen > 0 && !chatOpen) {
     notif.textContent = unseen > 9 ? '9+' : unseen;
     notif.classList.remove('hidden');
@@ -837,35 +861,36 @@ function updateNotif() {
 
 function markSeen() {
   localStorage.setItem(CHAT_SEEN_KEY, new Date().toISOString());
-  updateNotif();
+  document.getElementById('chat-notif').classList.add('hidden');
 }
 
-function toggleChat() {
+async function toggleChat() {
   chatOpen = !chatOpen;
   document.getElementById('chat-panel').classList.toggle('hidden', !chatOpen);
-  if (chatOpen) { renderChat(); markSeen(); }
+  if (chatOpen) { await renderChat(); markSeen(); }
 }
 
-function sendChatMsg() {
+async function sendChatMsg() {
   const name = localStorage.getItem('b4_note_name') || document.getElementById('chat-name').value.trim();
   const text = document.getElementById('chat-text').value.trim();
   if (!name) { checkNamePrompt(); return; }
   if (!text) { document.getElementById('chat-text').focus(); return; }
-  const msgs = loadMsgs();
+  document.getElementById('chat-text').value = '';
+  const msgs = [...cachedMsgs];
   msgs.push({ name, text, ts: new Date().toISOString() });
   if (msgs.length > 200) msgs.splice(0, msgs.length - 200);
-  saveMsgs(msgs);
-  document.getElementById('chat-text').value = '';
-  renderChat();
-  markSeen();
+  cachedMsgs = msgs;
+  renderChatFromCache();
+  await saveMsgs(msgs);
 }
 
-function deleteMsg(i) {
-  const msgs = loadMsgs();
+async function deleteMsg(i) {
+  const msgs = [...cachedMsgs];
   msgs.splice(i, 1);
-  saveMsgs(msgs);
-  renderChat();
-  updateNotif();
+  cachedMsgs = msgs;
+  renderChatFromCache();
+  await saveMsgs(msgs);
+  await updateNotif();
 }
 
 document.getElementById('chat-text').addEventListener('keydown', e => {
@@ -876,7 +901,7 @@ document.getElementById('chat-name').addEventListener('change', e => {
   localStorage.setItem('b4_note_name', e.target.value);
 });
 
-// Check for new messages every 30 seconds
+// Poll for new messages every 30 seconds
 setInterval(() => { if (!chatOpen) updateNotif(); }, 30000);
 updateNotif();
 
