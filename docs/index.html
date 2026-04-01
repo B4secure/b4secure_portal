@@ -428,6 +428,45 @@ body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--t
 }
 .article-copy-btn:hover { background: var(--emerald); border-color: var(--gold); }
 .article-copy-btn.copied-a { background: var(--gold); color: var(--emerald-deep); border-color: var(--gold); }
+
+/* EMPTY SEARCHES SECTION */
+.empty-searches-wrap {
+  margin-top: 24px;
+  border: 1px solid rgba(201,168,76,0.2);
+  border-radius: 10px; overflow: hidden;
+}
+.empty-searches-header {
+  background: var(--emerald-deep);
+  padding: 10px 16px;
+  display: flex; align-items: center; justify-content: space-between; cursor: pointer;
+}
+.empty-searches-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 14px; font-weight: 500; color: var(--gold-light);
+}
+.empty-searches-count {
+  font-size: 11px; color: rgba(201,168,76,0.6);
+  font-family: 'DM Mono', monospace;
+}
+.empty-searches-body { background: #fff; }
+.empty-searches-body.hidden { display: none; }
+.empty-search-row {
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(201,168,76,0.08);
+  display: flex; flex-direction: column; gap: 4px;
+}
+.empty-search-row:last-child { border-bottom: none; }
+.empty-search-name {
+  font-size: 13px; font-weight: 500; color: var(--text);
+}
+.empty-search-query {
+  font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace;
+  background: #f8f5ee; border-radius: 5px; padding: 5px 8px;
+  max-height: 54px; overflow-y: auto; line-height: 1.5;
+  word-break: break-word; white-space: pre-wrap; user-select: text;
+}
+.empty-search-query::-webkit-scrollbar { width: 3px; }
+.empty-search-query::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.3); border-radius: 2px; }
 </style>
 </head>
 <body>
@@ -521,14 +560,12 @@ body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--t
     <button class="tab-btn active" data-tab="village">
       Village Feed <span class="tab-badge" id="badge-village">0</span>
     </button>
-    <div style="display:flex;flex-direction:column;gap:2px">
-      <button class="tab-btn" data-tab="topic_daily" style="border-radius:8px 8px 0 0;font-size:12px;padding:7px 16px">
-        Topic · Daily <span class="tab-badge" id="badge-topic_daily">0</span>
-      </button>
-      <button class="tab-btn" data-tab="topic_weekly" style="border-radius:0;font-size:12px;padding:7px 16px">
-        Topic · Weekly <span class="tab-badge" id="badge-topic_weekly">0</span>
-      </button>
-    </div>
+    <button class="tab-btn" data-tab="topic_daily">
+      Topic · Daily <span class="tab-badge" id="badge-topic_daily">0</span>
+    </button>
+    <button class="tab-btn" data-tab="topic_weekly">
+      Topic · Weekly <span class="tab-badge" id="badge-topic_weekly">0</span>
+    </button>
     <button class="tab-btn" data-tab="cyber">
       Cyber Feed <span class="tab-badge" id="badge-cyber">0</span>
     </button>
@@ -604,6 +641,7 @@ const FEEDS = {
   topic_daily:  'https://b4secure.github.io/Topic_feed/daily_feed.json',
   topic_weekly: 'https://b4secure.github.io/Topic_feed/weekly_feed.json',
   cyber:        'https://b4secure.github.io/cyber_feed/feed.json',
+  empty:        'https://b4secure.github.io/actions-test/empty_searches.json',
 };
 // ─────────────────────────────────────────────────────────────────
 
@@ -613,6 +651,7 @@ const FEED_LABEL  = { village: 'Village', topic_daily: 'Topic · Daily', topic_w
 const FEED_TAG_CLASS = { village: 'tag-feed-village', topic_daily: 'tag-feed-topic', topic_weekly: 'tag-feed-topic', cyber: 'tag-feed-cyber' };
 
 let feeds = { village: [], topic_daily: [], topic_weekly: [], cyber: [] };
+let emptySearches = [];
 let feedStatus = { village: 'loading', topic_daily: 'loading', topic_weekly: 'loading', cyber: 'loading' };
 let activeTab = 'village';
 let activeTopicTab = 'topic_daily';
@@ -737,8 +776,7 @@ function render() {
       (isVillage ? (
         (queryText ? '<div class="article-query-wrap">' +
           '<div class="article-query-label">' +
-            '<span class="article-query-title">Search query</span>' +
-            '<button class="article-query-copy" data-query="' + queryText.replace(/"/g,'&quot;') + '" onclick="event.preventDefault();copyQueryBtn(this)">Copy query</button>' +
+            '<span class="article-query-title">Search query — select text to copy</span>' +
           '</div>' +
           '<div class="article-query-text">' + queryText.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>' +
         '</div>' : '') +
@@ -834,6 +872,46 @@ async function loadFeed(key, url) {
   if (activeTab === key) { buildSidebarFilters(); render(); }
 }
 
+
+async function loadEmptySearches() {
+  try {
+    const res  = await fetch(FEEDS.empty + '?t=' + Date.now());
+    if (!res.ok) return;
+    const data = await res.json();
+    emptySearches = data.searches || [];
+  } catch(e) { emptySearches = []; }
+}
+
+function renderEmptySearches() {
+  const existing = document.getElementById('empty-searches-section');
+  if (existing) existing.remove();
+  if (!emptySearches.length || activeTab !== 'village') return;
+
+  const list = document.getElementById('articles-list');
+  const wrap = document.createElement('div');
+  wrap.id = 'empty-searches-section';
+  wrap.className = 'empty-searches-wrap';
+  wrap.innerHTML =
+    '<div class="empty-searches-header" onclick="toggleEmptySearches()">' +
+      '<span class="empty-searches-title">Searches with no results today</span>' +
+      '<span class="empty-searches-count">' + emptySearches.length + ' searches</span>' +
+    '</div>' +
+    '<div class="empty-searches-body hidden" id="empty-searches-body">' +
+      emptySearches.map(s =>
+        '<div class="empty-search-row">' +
+          '<div class="empty-search-name">' + s.search_name + '</div>' +
+          (s.search_query ? '<div class="empty-search-query">' + s.search_query.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>' : '') +
+        '</div>'
+      ).join('') +
+    '</div>';
+  list.after(wrap);
+}
+
+function toggleEmptySearches() {
+  const body = document.getElementById('empty-searches-body');
+  if (body) body.classList.toggle('hidden');
+}
+
 async function init() {
   // Load all feeds in parallel
   await Promise.all([
@@ -841,9 +919,11 @@ async function init() {
     loadFeed('topic_daily',  FEEDS.topic_daily),
     loadFeed('topic_weekly', FEEDS.topic_weekly),
     loadFeed('cyber',        FEEDS.cyber),
+    loadEmptySearches(),
   ]);
   buildSidebarFilters();
   render();
+  renderEmptySearches();
 }
 
 // Tab switching
