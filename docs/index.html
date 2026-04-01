@@ -559,18 +559,45 @@ body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--t
 </div>
 
 <script>
-
 // ─────────────────────────────────────────────────────────────────
 // SET YOUR PASSWORD HERE
 const FEED_PASSWORD = 'b4feeds';
+
+
+function copyToClipboard(text) {
+  if (navigator.clipboard && window.isSecureContext) {
+    return navigator.clipboard.writeText(text);
+  }
+  // Fallback for older browsers / permission issues
+  return new Promise((resolve, reject) => {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    ta.style.top = '-9999px';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    try {
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      resolve();
+    } catch(e) {
+      document.body.removeChild(ta);
+      reject(e);
+    }
+  });
+}
 
 // ─────────────────────────────────────────────────────────────────
 // JSONBIN CONFIG — paste your key and bin ID here
 const JSONBIN_API_KEY = '$2a$10$f1mvpURB/E8w06pcDFlp9O9ks7U9gl8DUrdIQwDu7kE.L1CiHA4Wa';
 const JSONBIN_BIN_ID  = '69cbd79736566621a866ee80 ';
+
 // ─────────────────────────────────────────────────────────────────
 // ─────────────────────────────────────────────────────────────────
 
+// ─────────────────────────────────────────────────────────────────
 // FEED URLS — update these to match your actual GitHub Pages URLs
 const FEEDS = {
   village:      'https://b4secure.github.io/actions-test/feed.json',
@@ -735,7 +762,7 @@ function copyForGamma() {
   });
   const header = 'B4 Secure Intelligence Portal — ' + FEED_LABEL[activeTab] + ' Feed\nGenerated: ' +
     new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) + '\nTotal: ' + filtered.length + ' articles\n';
-  navigator.clipboard.writeText(header + '\n' + lines.join('\n\n')).then(() => {
+  copyToClipboard(header + '\n' + lines.join('\n\n')).then(() => {
     const btn = document.getElementById('copy-btn');
     btn.textContent = 'Copied!'; btn.classList.add('copied');
     setTimeout(() => {
@@ -947,13 +974,22 @@ async function sendChatMsg() {
   const text = document.getElementById('chat-text').value.trim();
   if (!name) { checkNamePrompt(); return; }
   if (!text) { document.getElementById('chat-text').focus(); return; }
+  if (!JSONBIN_BIN_ID || JSONBIN_BIN_ID === 'YOUR_BIN_ID_HERE') {
+    alert('Team chat not configured yet — JSONBin Bin ID is missing. Contact your admin.');
+    return;
+  }
   document.getElementById('chat-text').value = '';
   const msgs = [...cachedMsgs];
   msgs.push({ name, text, ts: new Date().toISOString() });
   if (msgs.length > 200) msgs.splice(0, msgs.length - 200);
   cachedMsgs = msgs;
   renderChatFromCache();
-  await saveMsgs(msgs);
+  try {
+    await saveMsgs(msgs);
+  } catch(e) {
+    console.error('Send failed:', e);
+    alert('Message could not be saved. Check your internet connection.');
+  }
 }
 
 async function deleteMsg(i) {
