@@ -382,17 +382,42 @@ body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--t
 .name-prompt-err { font-size: 12px; color: #dc2626; margin-top: 8px; min-height: 16px; }
 
 /* PER ARTICLE COPY */
-.article-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; flex-wrap: wrap; gap: 6px; }
-.article-query {
-  font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace;
-  background: #f5f3ee; border: 1px solid rgba(201,168,76,0.15);
-  border-radius: 5px; padding: 3px 8px;
-  cursor: pointer; transition: all 0.15s;
-  max-width: 420px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  flex: 1;
+.article-footer { display: flex; align-items: center; justify-content: flex-end; margin-top: 6px; }
+.article-query-wrap {
+  margin-top: 8px;
+  background: #f8f5ee;
+  border: 1px solid rgba(201,168,76,0.2);
+  border-radius: 7px;
+  overflow: hidden;
 }
-.article-query:hover { background: #eee9dc; border-color: rgba(201,168,76,0.35); color: var(--text2); }
-.article-query.copied-q { background: #e6f4ed; border-color: #22c55e; color: #1a5c38; }
+.article-query-label {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 5px 10px;
+  border-bottom: 1px solid rgba(201,168,76,0.12);
+}
+.article-query-title {
+  font-size: 10px; font-weight: 500;
+  color: rgba(201,168,76,0.7); text-transform: uppercase; letter-spacing: 0.15em;
+}
+.article-query-copy {
+  font-family: 'Jost', sans-serif; font-size: 10px; font-weight: 500;
+  padding: 2px 8px; border-radius: 4px;
+  border: 1px solid rgba(201,168,76,0.3);
+  background: var(--emerald-deep); color: var(--gold-light);
+  cursor: pointer; transition: all 0.15s; white-space: nowrap;
+}
+.article-query-copy:hover { background: var(--emerald); }
+.article-query-copy.copied-q { background: #22c55e; color: #fff; border-color: #22c55e; }
+.article-query-text {
+  font-size: 12px; color: var(--text2); font-family: 'DM Mono', monospace;
+  padding: 7px 10px;
+  max-height: 72px; overflow-y: auto;
+  line-height: 1.6; word-break: break-word; white-space: pre-wrap;
+  user-select: text;
+}
+.article-query-text::-webkit-scrollbar { width: 4px; }
+.article-query-text::-webkit-scrollbar-track { background: transparent; }
+.article-query-text::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.3); border-radius: 2px; }
 .article-copy-btn {
   font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 500;
   padding: 4px 10px; border-radius: 6px;
@@ -534,7 +559,6 @@ body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--t
 </div>
 
 <script>
-
 // ─────────────────────────────────────────────────────────────────
 // SET YOUR PASSWORD HERE
 const FEED_PASSWORD = 'b4feeds';
@@ -677,13 +701,21 @@ function render() {
         (date   ? '<span class="article-date">'   + date   + '</span>'  : '') +
         (ago    ? '<span class="article-dot">·</span><span class="article-time">' + ago + '</span>' : '') +
       '</div>' +
-      (isVillage ? '<div class="article-footer" onclick="event.preventDefault()">' +
-        (queryText ? '<span class="article-query" title="Click to copy search query" onclick="copyQuery(this, ' + JSON.stringify(queryText) + ')">' + queryText.substring(0,80) + (queryText.length>80?'…':'') + '</span>' : '<span></span>') +
-        '<button class="article-copy-btn" onclick="copyArticle(this, ' + JSON.stringify(date) + ', ' + JSON.stringify(title) + ', ' + JSON.stringify(a.link) + ', ' + JSON.stringify(cat) + ')">'+
-          '<svg width="11" height="11" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M11 5V3a2 2 0 00-2-2H3a2 2 0 00-2 2v6a2 2 0 002 2h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>' +
-          'Copy' +
-        '</button>' +
-      '</div>' : '') +
+      (isVillage ? (
+        (queryText ? '<div class="article-query-wrap" onclick="event.preventDefault()">' +
+          '<div class="article-query-label">' +
+            '<span class="article-query-title">Search query</span>' +
+            '<button class="article-query-copy" onclick="copyQuery(this, ' + JSON.stringify(queryText) + ')">Copy query</button>' +
+          '</div>' +
+          '<div class="article-query-text">' + queryText.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>' +
+        '</div>' : '') +
+        '<div class="article-footer" onclick="event.preventDefault()">' +
+          '<button class="article-copy-btn" onclick="copyArticle(this, ' + JSON.stringify(date) + ', ' + JSON.stringify(title) + ', ' + JSON.stringify(a.link) + ', ' + JSON.stringify(cat) + ')">'+
+            '<svg width="11" height="11" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M11 5V3a2 2 0 00-2-2H3a2 2 0 00-2 2v6a2 2 0 002 2h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>' +
+            'Copy article' +
+          '</button>' +
+        '</div>'
+      ) : '') +
     '</a>';
   }).join('');
 }
