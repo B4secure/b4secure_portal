@@ -592,7 +592,7 @@ function copyToClipboard(text) {
 // ─────────────────────────────────────────────────────────────────
 // JSONBIN CONFIG — paste your key and bin ID here
 const JSONBIN_API_KEY = '$2a$10$f1mvpURB/E8w06pcDFlp9O9ks7U9gl8DUrdIQwDu7kE.L1CiHA4Wa';
-const JSONBIN_BIN_ID  = '69cbd79736566621a866ee80 ';
+const JSONBIN_BIN_ID  = '69cbd79736566621a866ee80';
 
 // ─────────────────────────────────────────────────────────────────
 // ─────────────────────────────────────────────────────────────────
@@ -713,7 +713,13 @@ function render() {
     const isVillage = activeTab === 'village';
     const queryText = a.search_query || '';
 
-    return '<a class="article-card" href="' + a.link + '" target="_blank" rel="noopener" style="border-left-color:' + border + '">' +
+    const tag = isVillage ? 'div' : 'a';
+    const linkAttr = isVillage ? '' : 'href="' + a.link + '" target="_blank" rel="noopener"';
+    const titleHtml = isVillage
+      ? '<a href="' + a.link + '" target="_blank" rel="noopener" class="article-title" style="text-decoration:none;color:inherit">' + title + '</a>'
+      : '<div class="article-title">' + title + '</div>';
+
+    return '<' + tag + ' class="article-card" ' + linkAttr + ' style="border-left-color:' + border + '">' +
       '<div class="article-tags">' +
         '<span class="tag ' + tagClass + '">' + FEED_LABEL[activeTab] + '</span>' +
         (a.village  ? '<span class="tag tag-village">'  + a.village + '</span>' : '') +
@@ -721,7 +727,7 @@ function render() {
         (a.country  ? '<span class="tag tag-country">'  + a.country + '</span>' : '') +
         langTag +
       '</div>' +
-      '<div class="article-title">' + title + '</div>' +
+      titleHtml +
       (showOrig ? '<div class="article-title-orig">' + a.title + '</div>' : '') +
       '<div class="article-meta">' +
         (source ? '<span class="article-source">' + source + '</span><span class="article-dot">·</span>' : '') +
@@ -729,14 +735,14 @@ function render() {
         (ago    ? '<span class="article-dot">·</span><span class="article-time">' + ago + '</span>' : '') +
       '</div>' +
       (isVillage ? (
-        (queryText ? '<div class="article-query-wrap" onclick="event.preventDefault()">' +
+        (queryText ? '<div class="article-query-wrap">' +
           '<div class="article-query-label">' +
             '<span class="article-query-title">Search query</span>' +
             '<button class="article-query-copy" data-query="' + queryText.replace(/"/g,'&quot;') + '" onclick="event.preventDefault();copyQueryBtn(this)">Copy query</button>' +
           '</div>' +
           '<div class="article-query-text">' + queryText.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>' +
         '</div>' : '') +
-        '<div class="article-footer" onclick="event.preventDefault()">' +
+        '<div class="article-footer">' +
           '<button class="article-copy-btn"' +
             ' data-date="' + date.replace(/"/g,'&quot;') + '"' +
             ' data-title="' + title.replace(/"/g,'&quot;').replace(/'/g,'&#39;') + '"' +
@@ -748,7 +754,7 @@ function render() {
           '</button>' +
         '</div>'
       ) : '') +
-    '</a>';
+    '</' + tag + '>';
   }).join('');
 }
 
