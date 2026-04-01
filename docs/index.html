@@ -559,6 +559,7 @@ body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--t
 </div>
 
 <script>
+
 // ─────────────────────────────────────────────────────────────────
 // SET YOUR PASSWORD HERE
 const FEED_PASSWORD = 'b4feeds';
@@ -570,7 +571,6 @@ const JSONBIN_BIN_ID  = '69cbd79736566621a866ee80 ';
 // ─────────────────────────────────────────────────────────────────
 // ─────────────────────────────────────────────────────────────────
 
-// ─────────────────────────────────────────────────────────────────
 // FEED URLS — update these to match your actual GitHub Pages URLs
 const FEEDS = {
   village:      'https://b4secure.github.io/actions-test/feed.json',
@@ -705,12 +705,17 @@ function render() {
         (queryText ? '<div class="article-query-wrap" onclick="event.preventDefault()">' +
           '<div class="article-query-label">' +
             '<span class="article-query-title">Search query</span>' +
-            '<button class="article-query-copy" onclick="copyQuery(this, ' + JSON.stringify(queryText) + ')">Copy query</button>' +
+            '<button class="article-query-copy" data-query="' + queryText.replace(/"/g,'&quot;') + '" onclick="event.preventDefault();copyQueryBtn(this)">Copy query</button>' +
           '</div>' +
-          '<div class="article-query-text">' + queryText.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>' +
+          '<div class="article-query-text">' + queryText.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>' +
         '</div>' : '') +
         '<div class="article-footer" onclick="event.preventDefault()">' +
-          '<button class="article-copy-btn" onclick="copyArticle(this, ' + JSON.stringify(date) + ', ' + JSON.stringify(title) + ', ' + JSON.stringify(a.link) + ', ' + JSON.stringify(cat) + ')">'+
+          '<button class="article-copy-btn"' +
+            ' data-date="' + date.replace(/"/g,'&quot;') + '"' +
+            ' data-title="' + title.replace(/"/g,'&quot;').replace(/'/g,'&#39;') + '"' +
+            ' data-link="' + a.link.replace(/"/g,'&quot;') + '"' +
+            ' data-cat="' + cat.replace(/"/g,'&quot;') + '"' +
+            ' onclick="event.preventDefault();copyArticleBtn(this)">'+
             '<svg width="11" height="11" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M11 5V3a2 2 0 00-2-2H3a2 2 0 00-2 2v6a2 2 0 002 2h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>' +
             'Copy article' +
           '</button>' +
