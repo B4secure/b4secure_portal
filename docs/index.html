@@ -606,7 +606,7 @@ function copyArticleBtn(btn) {
   const title = btn.dataset.title;
   const link  = btn.dataset.link;
   const cat   = btn.dataset.cat;
-  const text  = '[' + cat + '] ' + date + '\n' + title + '\n' + link;
+  const text  = '[' + cat + '] ' + date + '\n' + title;
   copyToClipboard(text).then(() => {
     btn.textContent = 'Copied!';
     btn.classList.add('copied-a');
@@ -700,7 +700,7 @@ function getActiveArticles() { return feeds[activeTab] || []; }
 function getFiltered() {
   const q = document.getElementById('search').value.toLowerCase();
   return getActiveArticles().filter(a => {
-    if (activeCategory !== 'all') { const raw = (a.category && a.category !== 'undefined' && a.category !== 'nan') ? a.category : (a.search_name||''); const cat = raw.replace(/_/g,' '); if (cat !== activeCategory) return false; }
+    if (activeCategory !== 'all') { const cat = (a.search_name||'').replace(/_/g,' '); if (cat !== activeCategory) return false; }
     if (q) {
       const title = (a.title_en || a.title || '').toLowerCase();
       if (!title.includes(q) && !(a.village||'').toLowerCase().includes(q) &&
@@ -714,7 +714,7 @@ function buildSidebarFilters() {
   const articles = getActiveArticles();
 
   // Category filter — use search_name for topic/cyber, category for village
-  const cats = [...new Set(articles.map(a => { const c = a.category && a.category !== 'undefined' && a.category !== 'nan' ? a.category : (a.search_name||''); return c.replace(/_/g,' '); }).filter(Boolean))].sort();
+  const cats = [...new Set(articles.map(a => (a.search_name||'').replace(/_/g,' ')).filter(Boolean))].sort();
   const catEl = document.getElementById('cat-filters');
   catEl.innerHTML = '<button class="spill active" data-val="all">All</button>' +
     cats.map(c => '<button class="spill" data-val="' + c + '">' + c + '</button>').join('');
