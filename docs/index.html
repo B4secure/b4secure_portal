@@ -601,6 +601,25 @@ body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--t
 const FEED_PASSWORD = 'b4feeds';
 
 
+function copyArticleBtn(btn) {
+  const date  = btn.dataset.date;
+  const title = btn.dataset.title;
+  const link  = btn.dataset.link;
+  const cat   = btn.dataset.cat;
+  const text  = '[' + cat + '] ' + date + '\n' + title + '\n' + link;
+  copyToClipboard(text).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied-a');
+    setTimeout(() => {
+      btn.innerHTML = '<svg width="11" height="11" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M11 5V3a2 2 0 00-2-2H3a2 2 0 00-2 2v6a2 2 0 002 2h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> Copy article';
+      btn.classList.remove('copied-a');
+    }, 2000);
+  }).catch(() => {
+    btn.textContent = 'Failed';
+    setTimeout(() => { btn.textContent = 'Copy article'; }, 2000);
+  });
+}
+
 function copyToClipboard(text) {
   if (navigator.clipboard && window.isSecureContext) {
     return navigator.clipboard.writeText(text);
@@ -1052,7 +1071,12 @@ function markSeen() {
 async function toggleChat() {
   chatOpen = !chatOpen;
   document.getElementById('chat-panel').classList.toggle('hidden', !chatOpen);
-  if (chatOpen) { await renderChat(); markSeen(); }
+  if (chatOpen) {
+    // Show cached immediately, then refresh in background
+    if (cachedMsgs.length) renderChatFromCache();
+    else document.getElementById('chat-messages').innerHTML = '<div class="chat-empty">Loading…</div>';
+    loadMsgs().then(() => { renderChatFromCache(); markSeen(); });
+  }
 }
 
 async function sendChatMsg() {
@@ -1095,9 +1119,27 @@ document.getElementById('chat-name').addEventListener('change', e => {
   localStorage.setItem('b4_note_name', e.target.value);
 });
 
-// Poll for new messages every 30 seconds
-setInterval(() => { if (!chatOpen) updateNotif(); }, 30000);
-updateNotif();
+// Poll for new messages every 60 seconds using cached data
+async function pollChat() {
+  if (!chatOpen) {
+    await loadMsgs();
+    const seenTs = localStorage.getItem(CHAT_SEEN_KEY) || '0';
+    const unseen = cachedMsgs.filter(m => m.ts > seenTs).length;
+    const notif  = document.getElementById('chat-notif');
+    if (unseen > 0) {
+      notif.textContent = unseen > 9 ? '9+' : unseen;
+      notif.classList.remove('hidden');
+    } else {
+      notif.classList.add('hidden');
+    }
+  }
+}
+setInterval(pollChat, 60000);
+// Initial notif check using cache only (no fetch on load)
+const seenTsInit = localStorage.getItem(CHAT_SEEN_KEY) || '0';
+if (cachedMsgs.filter(m => m.ts > seenTsInit).length > 0) {
+  document.getElementById('chat-notif').classList.remove('hidden');
+}
 
 
 // ── NAME PROMPT ──
