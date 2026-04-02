@@ -798,7 +798,7 @@ const FEEDS = {
 
 const SESSION_KEY = 'b4_portal_auth';
 const FEED_BORDER = { village: '#22c55e', topic_daily: '#6366f1', topic_weekly: '#4f46e5', cyber: '#f43f5e' };
-const FEED_LABEL  = { village: 'Village', topic_daily: 'Topic · Daily', topic_weekly: 'Topic · Weekly', cyber: 'Cyber' };
+const FEED_LABEL  = { village: 'Village', topic_daily: 'Topic · Daily', topic_weekly: 'Topic · Weekly', cyber: 'Cyber', search_library: 'Search Library', findings: 'Findings' };
 const FEED_TAG_CLASS = { village: 'tag-feed-village', topic_daily: 'tag-feed-topic', topic_weekly: 'tag-feed-topic', cyber: 'tag-feed-cyber' };
 
 let feeds = { village: [], topic_daily: [], topic_weekly: [], cyber: [] };
@@ -862,20 +862,34 @@ function buildSidebarFilters() {
 }
 
 function render() {
-  const filtered = getFiltered();
   const list     = document.getElementById('articles-list');
   const countEl  = document.getElementById('results-count');
+
+  // Handle special tabs first
+  if (activeTab === 'search_library') {
+    countEl.textContent = '';
+    document.getElementById('s-total').textContent = '—';
+    document.getElementById('s-tab').textContent   = 'Search Library';
+    renderSearchLibrary();
+    return;
+  }
+  if (activeTab === 'findings') {
+    countEl.textContent = '';
+    document.getElementById('s-total').textContent = '—';
+    document.getElementById('s-tab').textContent   = 'Findings';
+    renderFindingsTab();
+    return;
+  }
+
+  const filtered = getFiltered();
   const q        = document.getElementById('search').value;
 
-  let desc = filtered.length + ' article' + (filtered.length !== 1 ? 's' : '') + ' · ' + FEED_LABEL[activeTab] + ' Feed';
+  let desc = filtered.length + ' article' + (filtered.length !== 1 ? 's' : '') + ' · ' + (FEED_LABEL[activeTab] || activeTab) + ' Feed';
   if (q) desc += ' matching "' + q + '"';
   countEl.textContent = desc;
 
   document.getElementById('s-total').textContent = getActiveArticles().length;
-  document.getElementById('s-tab').textContent   = FEED_LABEL[activeTab];
-
-  if (activeTab === 'search_library') { renderSearchLibrary(); return; }
-  if (activeTab === 'findings') { renderFindingsTab(); return; }
+  document.getElementById('s-tab').textContent   = FEED_LABEL[activeTab] || activeTab;
 
   if (feedStatus[activeTab] === 'loading') {
     list.innerHTML = '<div class="empty"><div class="empty-title">Loading…</div></div>';
@@ -1309,6 +1323,327 @@ function applyNameToChat(name) {
 document.getElementById('prompt-name-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') savePromptName();
 });
+
+
+// ── SEARCH LIBRARY DATA ──
+const SEARCH_LIBRARY = [
+  { owner: 'Angharad', name: 'Brand Protest', platform: 'google', terms: [
+    '("Gucci" OR "Ralph Lauren" OR "Dior" OR "Armani" OR "louis Vuitton" OR "Valentino" OR "Burberry" OR "dolce & gabbana" OR "Polo Ralph Lauren" OR "Cartier" OR "Calvin Klein" OR "Hilfiger" OR "Tommy H" OR "Timberland" OR "Prada" OR "Nike" OR "Balenciaga" OR "Canada Goose") AND ("protest")',
+    '("Alviero Martini" OR "Coach" OR "Hugo Boss" OR "Jimmy Choo" OR "Lacoste" OR "Michael Kors" OR "Moncler" OR "Rituals" OR "Saint Laurent" OR "Versace" OR "Lindt") AND ("protest")',
+    '("Rene Caovilla" OR "John Varvatos" OR "Paige" OR "Jacob Cohen" OR "Rains" OR "Orlebar Brown" OR "Peserico" OR "Missoni" OR "Charles Tyrwhitt" OR "Solaris" OR "Tumi" OR "Aquazzura" OR "Le Botaniste" OR "Loro Piana" OR "Incubator" OR "Kiton") AND ("protest")'
+  ]},
+  { owner: 'Angharad', name: 'Brand Boycott', platform: 'google', terms: [
+    '("Gucci" OR "Ralph Lauren" OR "Dior" OR "Armani" OR "louis Vuitton" OR "Valentino" OR "Burberry" OR "dolce & gabbana" OR "Polo Ralph Lauren" OR "Cartier" OR "Calvin Klein" OR "Hilfiger" OR "Tommy H" OR "Timberland" OR "Prada" OR "Nike" OR "Balenciaga" OR "Canada Goose") AND ("boycott")',
+    '("Alviero Martini" OR "Coach" OR "Hugo Boss" OR "Jimmy Choo" OR "Lacoste" OR "Michael Kors" OR "Moncler" OR "Rituals" OR "Saint Laurent" OR "Versace" OR "Lindt") AND ("boycott")',
+    '("Rene Caovilla" OR "John Varvatos" OR "Paige" OR "Jacob Cohen" OR "Rains" OR "Orlebar Brown" OR "Peserico" OR "Missoni" OR "Charles Tyrwhitt" OR "Solaris" OR "Tumi" OR "Aquazzura" OR "Le Botaniste" OR "Loro Piana" OR "Incubator" OR "Kiton") AND ("boycott")'
+  ]},
+  { owner: 'Angharad', name: 'Value Retail', platform: 'google', terms: [
+    '("valueretail" OR "Value retail" OR "Bicester Collection")',
+    '("value retail" OR "bicester collection") -"B&M"'
+  ]},
+  { owner: 'Angharad', name: 'BV/Value Retail Crime', platform: 'google', terms: [
+    '("Bicester Village" AND "money laundering" OR "gangs" OR "cash" OR "criminal")'
+  ]},
+  { owner: 'Angharad', name: 'London Marylebone', platform: 'google', terms: [
+    '("marylebone station" OR "london Marylebone") AND ("incident" OR "delay" OR "closed" OR "delays" OR "protest" OR "boycott" OR "bomb" OR "Bomb threat" OR "shooting" OR "explosion" OR "stabbing" OR "suspicious package" OR "unattended Package" OR "explosive" OR "bomb threat")'
+  ]},
+  { owner: 'Angharad', name: 'Roermond Outlet', platform: 'twitter', terms: [
+    '("@RoermondOutlet" OR "to:roermondoutlet" OR "Roermond outlet")'
+  ]},
+  { owner: 'Angharad', name: 'BV Accounts Mentions', platform: 'twitter', terms: [
+    '(@bicestervillage OR @KildareVillage OR @Vallee_Village OR @MMVillage OR @WertheimVillage OR @IngolstadtVillage OR @FidenzaVillage OR @LasRozasVillage OR @LaRocaVillage OR @bicester_coll)'
+  ]},
+  { owner: 'Angharad', name: 'BV Logistics Companies', platform: 'google', terms: [
+    '("Dropit" OR "DHL" OR "UPS" OR "DPD" OR "Flight Logistics" OR "Fedex" OR "Amazon" OR "Royal Mail" OR "Parcelforce" OR "EVRI") AND ("supply" OR "delivery")',
+    '("Dropit" OR "DHL" OR "UPS" OR "DPD" OR "Flight Logistics" OR "Fedex" OR "Amazon" OR "Royal Mail" OR "Parcelforce" OR "EVRI") AND ("supply chain")'
+  ]},
+  { owner: 'Angharad', name: 'High Level City Belgium Dutch', platform: 'google', terms: [
+    '("brussels" OR "Maastricht" OR "Antwerp") AND ("Bom" OR "bommelding" OR "onbeheerd pakket" OR "verdacht pakket" OR "explosieven" OR "explosie" OR "explosief" OR "schieten" OR "schietincident" OR "steken" OR "bommetje" OR "bomba" OR "Geknalt" OR "liquidatie")'
+  ]},
+  { owner: 'Angharad', name: 'High Level City Belgium English', platform: 'google', terms: [
+    '("brussels" OR "Maastricht" OR "Antwerp") AND ("Bomb" OR "explosion" OR "shooting" OR "Stabbing" OR "suspicious package" OR "unattended Package" OR "explosive" OR "bomb threat" OR "Retail crime")'
+  ]},
+  { owner: 'Angharad', name: 'High Level City Belgium French', platform: 'google', terms: [
+    '("brussels" OR "Maastricht" OR "Antwerp") AND ("Bombe" OR "alerte a la bombe" OR "explosif" OR "colis sans surveillance" OR "explosion" OR "colis suspect" OR "tournage" OR "poignarder")'
+  ]},
+  { owner: 'Angharad', name: 'Local Town Maasmechelen Dutch', platform: 'google', terms: [
+    '("Maasmechelen" OR "Hasselt" OR "Lanaken") AND ("Boycot" OR "Boycotten" OR "Protest" OR "Bom" OR "bommelding" OR "onbeheerd pakket" OR "verdacht pakket" OR "explosieven" OR "explosie" OR "explosief" OR "schieten" OR "schietincident" OR "steken" OR "bommetje" OR "bomba" OR "Geknalt" OR "liquidatie") -geoffroy'
+  ]},
+  { owner: 'Angharad', name: 'Village Maasmechelen', platform: 'twitter', terms: [
+    '("Maasmechelen Village" OR "#MaasmechelenVillage" OR "MaasmechelenVillage")'
+  ]},
+  { owner: 'Dan / Angharad', name: 'High Level City Germany English', platform: 'google', terms: [
+    '("Frankfurt" OR "Cologne" OR "Munich") AND ("Bomb" OR "explosion" OR "shooting" OR "Stabbing" OR "suspicious package" OR "unattended Package" OR "explosive" OR "bomb threat")'
+  ]},
+  { owner: 'Dan / Angharad', name: 'High Level City Germany German', platform: 'google', terms: [
+    '("Frankfurt" OR "Cologne" OR "Munich") AND ("Bombe" OR "explosion" OR "unbeaufsichtigtes Paket" OR "verdachtiges Paket" OR "Sprengstoffe" OR "Bombendrohung" OR "Schiessen" OR "Stechen")'
+  ]},
+  { owner: 'Dan / Angharad', name: 'Local Town Wertheim English', platform: 'google', terms: [
+    '("Wertheim" OR "Wurzburg" OR "Aschaffenburg") AND ("protest" OR "boycott" OR "bomb" OR "shooting" OR "explosion" OR "stabbing" OR "suspicious package" OR "unattended Package" OR "explosive" OR "bomb threat")'
+  ]},
+  { owner: 'Dan / Angharad', name: 'Local Town Wertheim German', platform: 'google', terms: [
+    '("Wertheim" OR "Wurzburg" OR "Aschaffenburg") AND ("protest" OR "protestieren" OR "boykottieren" OR "Boykott" OR "Bombe" OR "Bombendrohung" OR "verdachtiges Paket" OR "unbeaufsichtigtes Paket" OR "explosion" OR "Sprengstoffe" OR "Schiessen" OR "Stechend" OR "Messerstecherei")'
+  ]},
+  { owner: 'Dan / Angharad', name: 'Village Wertheim', platform: 'twitter', terms: [
+    '("Wertheim Village" OR "WertheimVillage" OR "#WertheimVillage")'
+  ]},
+  { owner: 'Dan / Elliot', name: 'PETA Twitter Search', platform: 'twitter', terms: [
+    'peta (gucci OR dior OR armani OR lv OR valentino OR vuitton OR polo OR ralph OR klein OR hilfiger OR prada OR balenciaga OR goose OR burberry OR lvmh)'
+  ]},
+  { owner: 'Dan / Elliot', name: 'PETA Broad Search', platform: 'google', terms: [
+    '"peta" AND ("Italy" OR "UK" OR "Germany" OR "Belgium" OR "Spain" OR "France") AND ("fashion" OR "designer" OR "retail" OR "clothing" OR "handbag") AND ("protest" OR "appointment" OR "rally" OR "demonstration")'
+  ]},
+  { owner: 'Dan / Elliot', name: 'PETA Village Search', platform: 'google', terms: [
+    '("peta") AND ("Ingolstadt" OR "Kildare" OR "vallee" OR "bicester" OR "Wertheim" OR "Rosas" OR "Roca" OR "Fidenza" OR "Maasmechelen")'
+  ]},
+  { owner: 'Dan / Elliot', name: 'XR and JSO Village Search', platform: 'google', terms: [
+    '("Protest") AND ("Ingolstadt" OR "Kildare" OR "vallee" OR "bicester" OR "Wertheim" OR "Rosaz" OR "Roca" OR "Fidenza" OR "Maasmechelen")'
+  ]},
+  { owner: 'Dan / Elliot', name: 'Shoplifting UK', platform: 'google', terms: [
+    '"shoplifting gang" OR "shoplifting trend" OR "pickpocket gang" OR "theft from person" OR "retail crime" OR "shop theft"'
+  ]},
+  { owner: 'Dan / Elliot', name: 'High Level City Spain English', platform: 'google', terms: [
+    '("Madrid" OR "Barcelona") AND ("Bomb" OR "explosion" OR "shooting" OR "Stabbing" OR "suspicious package" OR "unattended Package" OR "explosive" OR "bomb threat")'
+  ]},
+  { owner: 'Dan / Elliot', name: 'High Level City Spain Spanish', platform: 'google', terms: [
+    '("Madrid" OR "Barcelona") AND ("Bomba" OR "amenaza de bomba" OR "explosion" OR "paquete sospechoso" OR "paquete desatendido" OR "explosivos" OR "explosiva" OR "tiroteo" OR "punalada")'
+  ]},
+  { owner: 'Dan / Elliot', name: 'Local Town Las Rozas & La Roca English', platform: 'google', terms: [
+    '("Mataro" OR "Badalona" OR "Las Rozas" OR "Madrid" OR "LasRozas") AND ("protest" OR "strikes" OR "boycott" OR "bomb" OR "shooting" OR "explosion" OR "stabbing" OR "suspicious package" OR "unattended Package" OR "explosive" OR "bomb threat")'
+  ]},
+  { owner: 'Dan / Elliot', name: 'Local Town Las Rozas & La Roca Spanish', platform: 'google', terms: [
+    '("Mataro" OR "Badalona" OR "Las Rozas" OR "Madrid" OR "LasRozas") AND ("protest" OR "boycott" OR "Bomba" OR "amenaza de bomba" OR "explosion" OR "paquete sospechoso" OR "paquete desatendido" OR "explosivos" OR "explosiva" OR "tiroteo" OR "punalada")'
+  ]},
+  { owner: 'Dan / Elliot', name: 'Village Las Rozas & La Roca', platform: 'twitter', terms: [
+    '("Las Rozas Village" OR "LasRozasVillage" OR "#Lasrozasvillage" OR "La Roca Village" OR "#LaRocaVillage" OR "LaRocaVillage")'
+  ]},
+  { owner: 'Dan / Elliot', name: 'Local Town Bicester & Kildare', platform: 'google', terms: [
+    '(Kildare OR "Newbridge" OR "Bicester") AND ("protest" OR "boycott" OR "bomb" OR "shooting" OR "explosion" OR "stabbing" OR "suspicious package" OR "unattended Package" OR "explosive" OR "bomb threat")'
+  ]},
+  { owner: 'Elliot', name: 'Village Bicester & Kildare', platform: 'twitter', terms: [
+    '("Bicester Village" OR "BicesterVillage" OR "#BicesterVillage" OR "Kildare Village" OR "KildareVillage" OR "#KildareVillage")'
+  ]},
+  { owner: 'Elliot', name: 'High Level City UK & Ireland', platform: 'google', terms: [
+    '("Dublin" OR "Oxford" OR "London") AND ("Bomb" OR "explosion" OR "shooting" OR "Stabbing" OR "suspicious package" OR "unattended Package" OR "explosive" OR "bomb threat")'
+  ]},
+  { owner: 'Elliot', name: 'High Level City France English', platform: 'google', terms: [
+    '("Paris") AND ("Bomb" OR "explosion" OR "shooting" OR "Stabbing" OR "suspicious package" OR "unattended Package" OR "explosive" OR "bomb threat")'
+  ]},
+  { owner: 'Elliot', name: 'High Level City France French', platform: 'google', terms: [
+    '("Paris") AND ("Bombe" OR "alerte a la bombe" OR "explosion" OR "explosifs" OR "explosif" OR "explosive" OR "colis sans surveillance" OR "colis suspect" OR "tournage" OR "poignarder")'
+  ]},
+  { owner: 'Elliot', name: 'Local Town La Vallee French', platform: 'google', terms: [
+    '("Serris" OR "Bailly-Romainvilliers" OR "Magny-le-Hongre" OR "Seine-et-Marne" OR "Chessy" OR "Disneylandparis" OR "Disneyland paris") AND ("manifestation" OR "alerte a la bombe" OR "protestation" OR "boycotter" OR "greve" OR "colis suspect" OR "Bombe" OR "explosion" OR "colis sans surveillance" OR "explosifs" OR "tournage" OR "poignarder")'
+  ]},
+  { owner: 'Elliot', name: 'Local Town La Vallee & Ingolstadt English', platform: 'google', terms: [
+    '("Serris" OR "Bailly-Romainvilliers" OR "Disneyland Paris" OR "Magny-le-Hongre" OR "Chessy" OR "Seine-et-Marne" OR "Ingolstadt" OR "Disneylandparis") AND ("protest" OR "strike" OR "boycott" OR "bomb" OR "shooting" OR "explosion" OR "stabbing" OR "suspicious package" OR "unattended Package" OR "explosive" OR "bomb threat")'
+  ]},
+  { owner: 'Elliot', name: 'Local Town Ingolstadt German', platform: 'google', terms: [
+    '("Ingolstadt") AND ("protest" OR "protestieren" OR "strike" OR "schlagen" OR "boykottieren" OR "Boykott" OR "Bombe" OR "Bombendrohung" OR "explosion" OR "verdachtiges Paket" OR "Sprengstoffe" OR "unbeaufsichtigtes Paket" OR "Schiessen" OR "Stechend" OR "Messerstecherei")'
+  ]},
+  { owner: 'Elliot', name: 'Village La Vallee & Ingolstadt', platform: 'twitter', terms: [
+    '("La Vallee Village" OR "#LaValleeVillage" OR "LaValleeVillage" OR "Ingolstadt Village" OR "IngolstadtVillage" OR "#IngolstadtVillage")'
+  ]},
+  { owner: 'Elliot', name: 'High Level City Italy English', platform: 'google', terms: [
+    '("Milan" OR "Bologna") AND ("Bomb" OR "Bomb Threat" OR "explosion" OR "shooting" OR "Stabbing" OR "suspicious package" OR "unattended Package" OR "explosive")'
+  ]},
+  { owner: 'Elliot', name: 'High Level City Italy Italian', platform: 'google', terms: [
+    '("Milan" OR "Bologna") AND ("Bomba" OR "esplosione" OR "sparatoria" OR "Accoltellamento" OR "esplosivi" OR "pacco incustodito" OR "pacco sospetto" OR "minaccia bomba")'
+  ]},
+  { owner: 'Elliot', name: 'Local Town Fidenza English', platform: 'google', terms: [
+    '("Fidenza" OR "Parma" OR "Piacenza" OR "Cremona") AND ("protest" OR "boycott" OR "bomb" OR "Bomb threat" OR "shooting" OR "explosion" OR "stabbing" OR "suspicious package" OR "unattended Package" OR "explosive")'
+  ]},
+  { owner: 'Elliot', name: 'Local Town Fidenza Italian', platform: 'google', terms: [
+    '("Fidenza" OR "Parma" OR "Piacenza" OR "Cremona") AND ("boicottare" OR "protesta" OR "Bomba" OR "esplosione" OR "esplosivi" OR "sparatoria" OR "pacco incustodito" OR "pacco sospetto" OR "Accoltellamento" OR "minaccia bomba")'
+  ]},
+  { owner: 'Elliot', name: 'Village Fidenza', platform: 'twitter', terms: [
+    '("Fidenza Village" OR "Fidenzavillage" OR "#fidenzavillage")'
+  ]},
+];
+
+function renderSearchLibrary() {
+  const list = document.getElementById('articles-list');
+  const owners = [...new Set(SEARCH_LIBRARY.map(s => s.owner))];
+  const platformClass = { google: 'platform-google', twitter: 'platform-twitter', manual: 'platform-manual' };
+  const platformLabel = { google: 'Google News', twitter: 'Twitter / X', manual: 'Manual' };
+
+  list.innerHTML = '<div class="library-wrap">' +
+    owners.map(owner => {
+      const items = SEARCH_LIBRARY.filter(s => s.owner === owner);
+      return '<div class="library-owner">' +
+        '<div class="library-owner-title">' + owner + '</div>' +
+        items.map(s => {
+          return '<div class="library-item">' +
+            '<div class="library-item-header">' +
+              '<div class="library-item-name">' + s.name + '</div>' +
+              '<span class="library-item-platform ' + (platformClass[s.platform]||'') + '">' + (platformLabel[s.platform]||s.platform) + '</span>' +
+            '</div>' +
+            '<div class="library-terms">' +
+              s.terms.map(t => '<div class="library-term">' + escHtml(t) + '</div>').join('') +
+            '</div>' +
+            '<div class="library-copy-row">' +
+              s.terms.map((t, ti) =>
+                '<button class="library-copy-btn" data-term="' + t.replace(/"/g,'&quot;').replace(/'/g,'&#39;') + '" onclick="copyLibraryTerm(this)">Copy' + (s.terms.length > 1 ? ' term ' + (ti+1) : '') + '</button>'
+              ).join('') +
+              (s.terms.length > 1 ? '<button class="library-copy-btn" style="background:var(--emerald-mid)" data-term="' + s.terms.join(' ').replace(/"/g,'&quot;').replace(/'/g,'&#39;') + '" onclick="copyLibraryTerm(this)">Copy all</button>' : '') +
+            '</div>' +
+          '</div>';
+        }).join('') +
+      '</div>';
+    }).join('') +
+  '</div>';
+}
+
+function copyLibraryTerm(btn) {
+  const term = btn.dataset.term;
+  const orig = btn.textContent;
+  copyToClipboard(term).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// ── FINDINGS (Supabase) ──
+const VILLAGES_LIST = ['BV - Bicester','KV - Kildare','MMV - Maasmechelen','WV - Wertheim','IV - Ingolstadt','LRV - Las Rozas','LRV - La Roca','LVV - La Vallee','FV - Fidenza','Roermond'];
+const CATEGORIES_LIST = ['Shooting','Stabbing','Bomb Threat','Explosion','Suspicious Package','Protest','Boycott','Retail Crime','Fraud','Shoplifting','Other Crime','Other'];
+let findingsData = [];
+
+function renderFindingsTab() {
+  const list = document.getElementById('articles-list');
+  list.innerHTML =
+    '<div class="findings-wrap">' +
+      '<div class="findings-form-card">' +
+        '<div class="findings-form-header">Log a New Finding</div>' +
+        '<div class="findings-form-body">' +
+          '<div class="findings-row">' +
+            '<div class="findings-field"><label class="findings-label">Date of Incident</label><input class="findings-input" type="date" id="f-date"></div>' +
+            '<div class="findings-field"><label class="findings-label">Publication Date</label><input class="findings-input" type="date" id="f-pubdate"></div>' +
+            '<div class="findings-field"><label class="findings-label">Location</label><input class="findings-input" type="text" id="f-location" placeholder="e.g. Brussels"></div>' +
+          '</div>' +
+          '<div class="findings-row">' +
+            '<div class="findings-field"><label class="findings-label">Village</label><select class="findings-select" id="f-village"><option value="">Select village...</option>' + VILLAGES_LIST.map(v => '<option>' + v + '</option>').join('') + '</select></div>' +
+            '<div class="findings-field"><label class="findings-label">Nation</label><input class="findings-input" type="text" id="f-nation" placeholder="e.g. Belgium"></div>' +
+            '<div class="findings-field"><label class="findings-label">Category</label><select class="findings-select" id="f-category"><option value="">Select category...</option>' + CATEGORIES_LIST.map(c => '<option>' + c + '</option>').join('') + '</select></div>' +
+            '<div class="findings-field"><label class="findings-label">Sub Category</label><input class="findings-input" type="text" id="f-subcat" placeholder="Optional"></div>' +
+          '</div>' +
+          '<div class="findings-field"><label class="findings-label">Details</label><textarea class="findings-textarea" id="f-details" placeholder="Describe the incident..."></textarea></div>' +
+          '<div class="findings-row">' +
+            '<div class="findings-field"><label class="findings-label">Source URL</label><input class="findings-input" type="text" id="f-source" placeholder="https://..."></div>' +
+          '</div>' +
+          '<button class="findings-submit" id="findings-submit-btn" onclick="submitFinding()">Submit Finding</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="findings-list-card">' +
+        '<div class="findings-list-header">' +
+          '<span class="findings-list-title">All Findings</span>' +
+          '<button class="findings-export-btn" onclick="exportFindingsExcel()">Export CSV</button>' +
+        '</div>' +
+        '<div class="findings-table-wrap"><div id="findings-table-body"><div class="findings-empty">Loading findings...</div></div></div>' +
+      '</div>' +
+    '</div>';
+  loadFindings();
+}
+
+async function loadFindings() {
+  try {
+    const res = await fetch(SUPABASE_URL + '/rest/v1/findings?select=*&order=created_at.desc', {
+      headers: { 'apikey': SUPABASE_ANON, 'Authorization': 'Bearer ' + SUPABASE_ANON }
+    });
+    findingsData = await res.json();
+    renderFindingsTable();
+  } catch(e) {
+    const el = document.getElementById('findings-table-body');
+    if (el) el.innerHTML = '<div class="findings-empty">Could not load findings. Check Supabase config.</div>';
+  }
+}
+
+function renderFindingsTable() {
+  const el = document.getElementById('findings-table-body');
+  if (!el) return;
+  if (!findingsData.length) { el.innerHTML = '<div class="findings-empty">No findings yet.</div>'; return; }
+  el.innerHTML = '<table class="findings-table"><thead><tr>' +
+    '<th>Date</th><th>Location</th><th>Village</th><th>Nation</th><th>Category</th><th>Sub Cat</th><th>Details</th><th>Source</th><th>By</th><th></th>' +
+    '</tr></thead><tbody>' +
+    findingsData.map(f =>
+      '<tr>' +
+        '<td>' + (f.date_of_incident||'') + '</td>' +
+        '<td>' + escHtml(f.location||'') + '</td>' +
+        '<td>' + escHtml(f.village||'') + '</td>' +
+        '<td>' + escHtml(f.nation||'') + '</td>' +
+        '<td>' + escHtml(f.category||'') + '</td>' +
+        '<td>' + escHtml(f.sub_category||'') + '</td>' +
+        '<td style="max-width:200px">' + escHtml(f.details||'') + '</td>' +
+        '<td>' + (f.source ? '<a href="' + escHtml(f.source) + '" target="_blank" style="color:var(--emerald);font-size:11px">Link</a>' : '') + '</td>' +
+        '<td>' + escHtml(f.submitted_by||'') + '</td>' +
+        '<td><button class="findings-del-btn" onclick="deleteFinding(' + f.id + ')">x</button></td>' +
+      '</tr>'
+    ).join('') +
+    '</tbody></table>';
+}
+
+async function submitFinding() {
+  const name = localStorage.getItem('b4_note_name') || '';
+  const finding = {
+    date_of_incident: document.getElementById('f-date').value || null,
+    publication_date: document.getElementById('f-pubdate').value || null,
+    location:     document.getElementById('f-location').value.trim(),
+    village:      document.getElementById('f-village').value,
+    nation:       document.getElementById('f-nation').value.trim(),
+    category:     document.getElementById('f-category').value,
+    sub_category: document.getElementById('f-subcat').value.trim(),
+    details:      document.getElementById('f-details').value.trim(),
+    source:       document.getElementById('f-source').value.trim(),
+    submitted_by: name,
+  };
+  if (!finding.details) { alert('Please add details before submitting.'); return; }
+  const btn = document.getElementById('findings-submit-btn');
+  btn.textContent = 'Saving...'; btn.classList.add('saving');
+  try {
+    const res = await fetch(SUPABASE_URL + '/rest/v1/findings', {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_ANON, 'Authorization': 'Bearer ' + SUPABASE_ANON,
+        'Content-Type': 'application/json', 'Prefer': 'return=representation'
+      },
+      body: JSON.stringify(finding)
+    });
+    if (!res.ok) throw new Error(await res.text());
+    btn.textContent = 'Submitted!';
+    setTimeout(() => { btn.textContent = 'Submit Finding'; btn.classList.remove('saving'); }, 2000);
+    ['f-date','f-pubdate','f-location','f-village','f-nation','f-category','f-subcat','f-details','f-source'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.value = '';
+    });
+    loadFindings();
+  } catch(e) {
+    alert('Failed to save: ' + e.message);
+    btn.textContent = 'Submit Finding'; btn.classList.remove('saving');
+  }
+}
+
+async function deleteFinding(id) {
+  if (!confirm('Delete this finding?')) return;
+  await fetch(SUPABASE_URL + '/rest/v1/findings?id=eq.' + id, {
+    method: 'DELETE',
+    headers: { 'apikey': SUPABASE_ANON, 'Authorization': 'Bearer ' + SUPABASE_ANON }
+  });
+  loadFindings();
+}
+
+function exportFindingsExcel() {
+  if (!findingsData.length) { alert('No findings to export.'); return; }
+  const headers = ['Date of Incident','Publication Date','Location','Village','Nation','Category','Sub Category','Details','Source','Submitted By'];
+  const rows = findingsData.map(f => [
+    f.date_of_incident||'', f.publication_date||'', f.location||'', f.village||'',
+    f.nation||'', f.category||'', f.sub_category||'', f.details||'', f.source||'', f.submitted_by||''
+  ]);
+  let csv = headers.join(',') + '\n' + rows.map(r => r.map(v => '"' + String(v).replace(/"/g,'""') + '"').join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'b4secure_findings_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+}
 
 function initWithName() { init(); checkNamePrompt(); }
 if (checkGate()) initWithName();
