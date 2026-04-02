@@ -1106,7 +1106,9 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     activeCategory = 'all'; activeVillage = 'all';
     if (activeTab === 'topic_daily' || activeTab === 'topic_weekly') activeTopicTab = activeTab;
     document.getElementById('search').value = '';
-    buildSidebarFilters();
+    if (activeTab !== 'search_library' && activeTab !== 'findings') {
+      buildSidebarFilters();
+    }
     render();
   });
 });
