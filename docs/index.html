@@ -467,6 +467,127 @@ body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--t
 }
 .empty-search-query::-webkit-scrollbar { width: 3px; }
 .empty-search-query::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.3); border-radius: 2px; }
+
+/* SEARCH LIBRARY */
+.library-wrap { padding: 4px 0; }
+.library-owner {
+  margin-bottom: 20px;
+}
+.library-owner-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 16px; font-weight: 500; color: var(--emerald-deep);
+  padding: 10px 0 6px;
+  border-bottom: 2px solid rgba(201,168,76,0.3);
+  margin-bottom: 10px; letter-spacing: 0.03em;
+}
+.library-item {
+  background: #fff; border: 1px solid rgba(201,168,76,0.15);
+  border-radius: 8px; padding: 12px 16px; margin-bottom: 6px;
+  border-left: 3px solid var(--gold);
+}
+.library-item-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+.library-item-name { font-size: 13px; font-weight: 500; color: var(--text); flex: 1; }
+.library-item-platform {
+  font-size: 10px; font-weight: 500; padding: 2px 8px; border-radius: 4px;
+  white-space: nowrap; flex-shrink: 0;
+}
+.platform-google { background: #e8f0fe; color: #1a56db; border: 1px solid #a4c3fb; }
+.platform-twitter { background: #e7f5ff; color: #1864ab; border: 1px solid #74c0fc; }
+.platform-manual { background: #fff3e0; color: #e65100; border: 1px solid #ffb74d; }
+.library-terms { display: flex; flex-direction: column; gap: 4px; }
+.library-term {
+  font-size: 11px; color: var(--text2); font-family: 'DM Mono', monospace;
+  background: #f8f5ee; border-radius: 5px; padding: 5px 8px;
+  max-height: 54px; overflow-y: auto; line-height: 1.5;
+  word-break: break-word; white-space: pre-wrap; user-select: text;
+  cursor: text;
+}
+.library-term::-webkit-scrollbar { width: 3px; }
+.library-term::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.3); border-radius: 2px; }
+.library-copy-row { display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap; }
+.library-copy-btn {
+  font-family: 'Jost', sans-serif; font-size: 10px; font-weight: 500;
+  padding: 3px 8px; border-radius: 5px;
+  border: 1px solid rgba(201,168,76,0.3);
+  background: var(--emerald-deep); color: var(--gold-light);
+  cursor: pointer; transition: all 0.15s;
+}
+.library-copy-btn:hover { background: var(--emerald); }
+.library-copy-btn.copied { background: #22c55e; color: #fff; border-color: #22c55e; }
+
+/* FINDINGS TAB */
+.findings-wrap { display: flex; flex-direction: column; gap: 16px; }
+.findings-form-card {
+  background: #fff; border: 1px solid rgba(201,168,76,0.2);
+  border-radius: 10px; overflow: hidden;
+}
+.findings-form-header {
+  background: var(--emerald-deep); padding: 10px 16px;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 15px; font-weight: 500; color: var(--gold-light);
+}
+.findings-form-body { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.findings-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.findings-field { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 140px; }
+.findings-label { font-size: 11px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; }
+.findings-input, .findings-select, .findings-textarea {
+  font-family: 'Jost', sans-serif; font-size: 13px;
+  padding: 8px 10px; border: 1px solid rgba(201,168,76,0.25);
+  border-radius: 7px; outline: none; color: var(--text); background: #faf7f0;
+  transition: border-color 0.15s;
+}
+.findings-input:focus, .findings-select:focus, .findings-textarea:focus { border-color: var(--gold); }
+.findings-textarea { resize: vertical; min-height: 70px; }
+.findings-submit {
+  font-family: 'Jost', sans-serif; font-size: 13px; font-weight: 500;
+  padding: 10px 24px; border-radius: 8px; align-self: flex-end;
+  background: var(--emerald-deep); color: var(--gold-light);
+  border: 1px solid rgba(201,168,76,0.3); cursor: pointer; transition: all 0.15s;
+}
+.findings-submit:hover { background: var(--emerald); }
+.findings-submit.saving { opacity: 0.6; pointer-events: none; }
+
+.findings-list-card {
+  background: #fff; border: 1px solid rgba(201,168,76,0.2);
+  border-radius: 10px; overflow: hidden;
+}
+.findings-list-header {
+  background: var(--emerald-deep); padding: 10px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.findings-list-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 15px; font-weight: 500; color: var(--gold-light);
+}
+.findings-export-btn {
+  font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 500;
+  padding: 4px 12px; border-radius: 5px;
+  background: var(--gold); color: var(--emerald-deep);
+  border: none; cursor: pointer; transition: opacity 0.15s;
+}
+.findings-export-btn:hover { opacity: 0.85; }
+.findings-table-wrap { overflow-x: auto; }
+.findings-table {
+  width: 100%; border-collapse: collapse; font-size: 12px;
+}
+.findings-table th {
+  background: #f8f5ee; padding: 8px 12px; text-align: left;
+  font-size: 10px; font-weight: 500; color: var(--text3);
+  text-transform: uppercase; letter-spacing: 0.1em;
+  border-bottom: 1px solid rgba(201,168,76,0.15); white-space: nowrap;
+}
+.findings-table td {
+  padding: 8px 12px; border-bottom: 1px solid rgba(201,168,76,0.08);
+  color: var(--text); vertical-align: top; max-width: 200px;
+}
+.findings-table tr:hover td { background: #faf7f0; }
+.findings-del-btn {
+  background: none; border: none; cursor: pointer;
+  color: #ccc; font-size: 13px; padding: 0 2px;
+  transition: color 0.15s;
+}
+.findings-del-btn:hover { color: #ef4444; }
+.findings-empty { text-align: center; padding: 30px; color: var(--text3); font-size: 13px; }
 </style>
 </head>
 <body>
@@ -569,6 +690,12 @@ body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--t
     <button class="tab-btn" data-tab="cyber">
       Cyber Feed <span class="tab-badge" id="badge-cyber">0</span>
     </button>
+    <button class="tab-btn" data-tab="search_library">
+      Search Library
+    </button>
+    <button class="tab-btn" data-tab="findings">
+      Findings
+    </button>
   </div>
 
   <div class="feed-status" id="feed-status">
@@ -596,6 +723,11 @@ body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--t
 </div>
 
 <script>
+// ─────────────────────────────────────────────────────────────────
+// SUPABASE CONFIG — paste your values here
+const SUPABASE_URL    = 'https://rrtswqqkkcuhsfywepdk.supabase.co';      // e.g. https://abcdef.supabase.co
+const SUPABASE_ANON   = 'sb_publishable_jjuBYW0o4SMre6IjmT3Eng_TjbdAVuy'; // sb_publishable_...
+// ─────────────────────────────────────────────────────────────────
 // ─────────────────────────────────────────────────────────────────
 // SET YOUR PASSWORD HERE
 const FEED_PASSWORD = 'b4feeds';
@@ -741,6 +873,9 @@ function render() {
 
   document.getElementById('s-total').textContent = getActiveArticles().length;
   document.getElementById('s-tab').textContent   = FEED_LABEL[activeTab];
+
+  if (activeTab === 'search_library') { renderSearchLibrary(); return; }
+  if (activeTab === 'findings') { renderFindingsTab(); return; }
 
   if (feedStatus[activeTab] === 'loading') {
     list.innerHTML = '<div class="empty"><div class="empty-title">Loading…</div></div>';
