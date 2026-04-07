@@ -1106,9 +1106,26 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     activeCategory = 'all'; activeVillage = 'all';
     if (activeTab === 'topic_daily' || activeTab === 'topic_weekly') activeTopicTab = activeTab;
     document.getElementById('search').value = '';
-    if (activeTab !== 'search_library' && activeTab !== 'findings') {
-      buildSidebarFilters();
+
+    const list    = document.getElementById('articles-list');
+    const countEl = document.getElementById('results-count');
+
+    if (activeTab === 'search_library') {
+      countEl.textContent = '';
+      document.getElementById('s-total').textContent = '—';
+      document.getElementById('s-tab').textContent   = 'Search Library';
+      renderSearchLibrary();
+      return;
     }
+    if (activeTab === 'findings') {
+      countEl.textContent = '';
+      document.getElementById('s-total').textContent = '—';
+      document.getElementById('s-tab').textContent   = 'Findings';
+      renderFindingsTab();
+      return;
+    }
+
+    buildSidebarFilters();
     render();
   });
 });
