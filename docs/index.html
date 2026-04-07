@@ -1027,7 +1027,7 @@ function renderFindingsTable() {
   if (!findingsData.length) { el.innerHTML = '<div class="findings-empty">No findings yet.</div>'; return; }
   el.innerHTML = '<table class="findings-table"><thead><tr><th>Date</th><th>Location</th><th>Village</th><th>Nation</th><th>Category</th><th>Sub Cat</th><th>Details</th><th>Source</th><th>By</th><th></th></tr></thead><tbody>' +
     findingsData.map(function(f) {
-      return '<tr><td>' + (f.date_of_incident||'') + '</td><td>' + escHtml(f.location||'') + '</td><td>' + escHtml(f.village||'') + '</td><td>' + escHtml(f.nation||'') + '</td><td>' + escHtml(f.category||'') + '</td><td>' + escHtml(f.sub_category||'') + '</td><td style="max-width:200px">' + escHtml(f.details||'') + '</td><td>' + (f.source ? '<a href="' + escHtml(f.source) + '" target="_blank" style="color:var(--emerald);font-size:11px">Link</a>' : '') + '</td><td>' + escHtml(f.submitted_by||'') + '</td><td><button class="findings-del-btn" onclick="deleteFinding(' + f.id + ')">x</button></td></tr>';
+      return '<tr><td>' + (f.date_of_incident||'') + '</td><td>' + escHtml(f.location||'') + '</td><td>' + escHtml(f.Village||'') + '</td><td>' + escHtml(f.Nation||'') + '</td><td>' + escHtml(f.Category||'') + '</td><td>' + escHtml(f.sub_Category||'') + '</td><td style="max-width:200px">' + escHtml(f.details||'') + '</td><td>' + (f.source ? '<a href="' + escHtml(f.source) + '" target="_blank" style="color:var(--emerald);font-size:11px">Link</a>' : '') + '</td><td>' + escHtml(f.submitted_by||'') + '</td><td><button class="findings-del-btn" onclick="deleteFinding(' + f.id + ')">x</button></td></tr>';
     }).join('') + '</tbody></table>';
 }
 
@@ -1035,12 +1035,12 @@ function submitFinding() {
   var name = localStorage.getItem(NAME_KEY) || '';
   var finding = {
     date_of_incident: document.getElementById('f-date').value || null,
-    publication_date: document.getElementById('f-pubdate').value || null,
+    published_date: document.getElementById('f-pubdate').value || null,
     location:     document.getElementById('f-location').value.trim(),
-    village:      document.getElementById('f-village').value,
-    nation:       document.getElementById('f-nation').value.trim(),
-    category:     document.getElementById('f-category').value,
-    sub_category: document.getElementById('f-subcat').value.trim(),
+    Village:      document.getElementById('f-village').value,
+    Nation:       document.getElementById('f-nation').value.trim(),
+    Category:     document.getElementById('f-category').value,
+    sub_Category: document.getElementById('f-subcat').value.trim(),
     details:      document.getElementById('f-details').value.trim(),
     source:       document.getElementById('f-source').value.trim(),
     submitted_by: name,
@@ -1070,8 +1070,8 @@ function deleteFinding(id) {
 
 function exportFindingsCSV() {
   if (!findingsData.length) { alert('No findings to export.'); return; }
-  var headers = ['Date of Incident','Publication Date','Location','Village','Nation','Category','Sub Category','Details','Source','Submitted By'];
-  var rows = findingsData.map(function(f) { return [f.date_of_incident||'',f.publication_date||'',f.location||'',f.village||'',f.nation||'',f.category||'',f.sub_category||'',f.details||'',f.source||'',f.submitted_by||'']; });
+  var headers = ['Date of Incident','Published Date','Location','Village','Nation','Category','Sub Category','Details','Source','Submitted By'];
+  var rows = findingsData.map(function(f) { return [f.date_of_incident||'',f.published_date||'',f.location||'',f.village||'',f.nation||'',f.category||'',f.sub_category||'',f.details||'',f.source||'',f.submitted_by||'']; });
   var csv = headers.join(',') + '\n' + rows.map(function(r) { return r.map(function(v) { return '"' + String(v).replace(/"/g,'""') + '"'; }).join(','); }).join('\n');
   var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
   a.download = 'b4secure_findings_' + new Date().toISOString().slice(0,10) + '.csv'; a.click();
@@ -1098,7 +1098,7 @@ function buildSidebarFilters() {
     catEl.innerHTML = '';
     return;
   }
-  var articles = getActiveArticles();
+  var articles = feeds[activeTab] || [];
   var cats = [];
   articles.forEach(function(a) { var c = (a.search_name||'').replace(/_/g,' '); if (c && cats.indexOf(c) === -1) cats.push(c); });
   cats.sort();
