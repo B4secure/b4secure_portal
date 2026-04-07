@@ -1027,7 +1027,7 @@ function renderFindingsTable() {
   if (!findingsData.length) { el.innerHTML = '<div class="findings-empty">No findings yet.</div>'; return; }
   el.innerHTML = '<table class="findings-table"><thead><tr><th>Date</th><th>Location</th><th>Village</th><th>Nation</th><th>Category</th><th>Sub Cat</th><th>Details</th><th>Source</th><th>By</th><th></th></tr></thead><tbody>' +
     findingsData.map(function(f) {
-      return '<tr><td>' + (f.date_of_incident||'') + '</td><td>' + escHtml(f.location||'') + '</td><td>' + escHtml(f.Village||'') + '</td><td>' + escHtml(f.Nation||'') + '</td><td>' + escHtml(f.Category||'') + '</td><td>' + escHtml(f.sub_Category||'') + '</td><td style="max-width:200px">' + escHtml(f.details||'') + '</td><td>' + (f.source ? '<a href="' + escHtml(f.source) + '" target="_blank" style="color:var(--emerald);font-size:11px">Link</a>' : '') + '</td><td>' + escHtml(f.submitted_by||'') + '</td><td><button class="findings-del-btn" onclick="deleteFinding(' + f.id + ')">x</button></td></tr>';
+      return '<tr><td>' + (f.date_of_incident||'') + '</td><td>' + escHtml(f.location||'') + '</td><td>' + escHtml(f.Village||'') + '</td><td>' + escHtml(f.Nation||'') + '</td><td>' + escHtml(f.Category||'') + '</td><td>' + escHtml(f.sub_Category||'') + '</td><td style="max-width:200px">' + escHtml(f.details||'') + '</td><td>' + (f.Source ? '<a href="' + escHtml(f.Source) + '" target="_blank" style="color:var(--emerald);font-size:11px">Link</a>' : '') + '</td><td>' + escHtml(f.submitted_by||'') + '</td><td><button class="findings-del-btn" onclick="deleteFinding(' + f.id + ')">x</button></td></tr>';
     }).join('') + '</tbody></table>';
 }
 
@@ -1042,7 +1042,7 @@ function submitFinding() {
     Category:         document.getElementById('f-category').value,
     sub_Category:     document.getElementById('f-subcat').value.trim(),
     details:          document.getElementById('f-details').value.trim(),
-    source:           document.getElementById('f-source').value.trim(),
+    Source:           document.getElementById('f-source').value.trim(),
     submitted_by:     name,
   };
   if (!finding.details) { alert('Please add details before submitting.'); return; }
@@ -1105,16 +1105,13 @@ function getFiltered() {
 
 function buildSidebarFilters() {
   var catEl = document.getElementById('cat-filters');
-  if (activeTab === 'search_library' || activeTab === 'findings') {
-    catEl.innerHTML = '';
-    return;
-  }
+  catEl.innerHTML = '';
+  if (activeTab === 'search_library' || activeTab === 'findings') return;
   var articles = feeds[activeTab] || [];
-  if (!articles.length) { catEl.innerHTML = ''; return; }
+  if (!articles.length) return;
   var cats = [];
   articles.forEach(function(a) { var c = (a.search_name||'').replace(/_/g,' '); if (c && cats.indexOf(c) === -1) cats.push(c); });
   cats.sort();
-  var catEl = document.getElementById('cat-filters');
   catEl.innerHTML = '<button class="spill active" data-val="all">All</button>' + cats.map(function(c) { return '<button class="spill" data-val="' + c + '">' + c + '</button>'; }).join('');
   catEl.querySelectorAll('.spill').forEach(function(btn) {
     btn.addEventListener('click', function() {
@@ -1257,6 +1254,7 @@ document.querySelectorAll('.tab-btn').forEach(function(btn) {
     activeTab = btn.dataset.tab;
     activeCategory = 'all'; activeVillage = 'all';
     document.getElementById('search').value = '';
+    buildSidebarFilters();
     render();
   });
 });
