@@ -728,7 +728,7 @@ body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--t
 <script>
 // ── CONFIG ──
 var SUPABASE_URL    = 'https://rrtswqqkkcuhsfywepdk.supabase.co';
-var SUPABASE_ANON   = 'sb_publishable_jjuBYW0o4SMre6IjmT3Eng_TjbdAVuy';
+var SUPABASE_ANON   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJydHN3cXFra2N1aHNmeXdlcGRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxMzc2NDAsImV4cCI6MjA5MDcxMzY0MH0.gQRpoif-cLFZEvQPo_IR9poSVlOeZIaCQ1ggAqMAdzs';
 var FEED_PASSWORD   = 'b4feeds';
 var JSONBIN_API_KEY = '$2a$10$f1mvpURB/E8w06pcDFlp9O9ks7U9gl8DUrdIQwDu7kE.L1CiHA4Wa';
 var JSONBIN_BIN_ID  = '69cbd79736566621a866ee80';
@@ -1093,6 +1093,11 @@ function getFiltered() {
 }
 
 function buildSidebarFilters() {
+  var catEl = document.getElementById('cat-filters');
+  if (activeTab === 'search_library' || activeTab === 'findings') {
+    catEl.innerHTML = '';
+    return;
+  }
   var articles = getActiveArticles();
   var cats = [];
   articles.forEach(function(a) { var c = (a.search_name||'').replace(/_/g,' '); if (c && cats.indexOf(c) === -1) cats.push(c); });
