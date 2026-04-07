@@ -1244,8 +1244,8 @@ document.querySelectorAll('.tab-btn').forEach(function(btn) {
   });
 });
 
-document.getElementById('search').addEventListener('input', render);
-document.getElementById('copy-btn').addEventListener('click', copyForGamma);
+var si = document.getElementById('search'); if (si) si.addEventListener('input', render);
+var cb = document.getElementById('copy-btn'); if (cb) cb.addEventListener('click', copyForGamma);
 
 // ── PASSWORD GATE ──
 function checkGate() {
@@ -1264,8 +1264,8 @@ function tryUnlock() {
     setTimeout(function() { err.textContent = ''; }, 3000);
   }
 }
-document.getElementById('gate-btn').addEventListener('click', tryUnlock);
-document.getElementById('gate-input').addEventListener('keydown', function(e) { if (e.key === 'Enter') tryUnlock(); });
+var gb = document.getElementById('gate-btn'); if (gb) gb.addEventListener('click', tryUnlock);
+var gi = document.getElementById('gate-input'); if (gi) gi.addEventListener('keydown', function(e) { if (e.key === 'Enter') tryUnlock(); });
 
 // ── CHAT ──
 function loadMsgs() {
@@ -1306,7 +1306,7 @@ function sendChatMsg() {
 function deleteMsg(i) {
   var msgs = cachedMsgs.slice(); msgs.splice(i, 1); cachedMsgs = msgs; renderChatFromCache(); saveMsgs(msgs);
 }
-document.getElementById('chat-text').addEventListener('keydown', function(e) { if (e.key === 'Enter') sendChatMsg(); });
+var ct = document.getElementById('chat-text'); if (ct) ct.addEventListener('keydown', function(e) { if (e.key === 'Enter') sendChatMsg(); });
 
 function pollChat() {
   if (!chatOpen) {
@@ -1333,7 +1333,7 @@ function savePromptName() {
   document.getElementById('name-prompt').classList.add('hidden');
   var el = document.getElementById('chat-name'); if (el) el.value = val;
 }
-document.getElementById('prompt-name-input').addEventListener('keydown', function(e) { if (e.key === 'Enter') savePromptName(); });
+var pni = document.getElementById('prompt-name-input'); if (pni) pni.addEventListener('keydown', function(e) { if (e.key === 'Enter') savePromptName(); });
 
 function initWithName() { init(); checkNamePrompt(); }
 if (checkGate()) initWithName();
