@@ -693,10 +693,10 @@ body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--t
     <button class="tab-btn" data-tab="cyber">
       Cyber Feed <span class="tab-badge" id="badge-cyber">0</span>
     </button>
-    <button class="tab-btn" data-tab="search_library">
+    <button class="tab-btn" data-tab="search_library" onclick="document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active');activeTab='search_library';document.getElementById('results-count').textContent='';document.getElementById('articles-list').innerHTML='<div>Loading...</div>';renderSearchLibrary();">
       Search Library
     </button>
-    <button class="tab-btn" data-tab="findings">
+    <button class="tab-btn" data-tab="findings" onclick="document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active');activeTab='findings';document.getElementById('results-count').textContent='';document.getElementById('articles-list').innerHTML='<div>Loading...</div>';renderFindingsTab();">
       Findings
     </button>
   </div>
