@@ -1348,7 +1348,7 @@ document.getElementById('prompt-name-input').addEventListener('keydown', e => {
 
 
 // ── SEARCH LIBRARY DATA ──
-const SEARCH_LIBRARY = [
+var SEARCH_LIBRARY = [
   { owner: 'Angharad', name: 'Brand Protest', platform: 'google', terms: [
     '("Gucci" OR "Ralph Lauren" OR "Dior" OR "Armani" OR "louis Vuitton" OR "Valentino" OR "Burberry" OR "dolce & gabbana" OR "Polo Ralph Lauren" OR "Cartier" OR "Calvin Klein" OR "Hilfiger" OR "Tommy H" OR "Timberland" OR "Prada" OR "Nike" OR "Balenciaga" OR "Canada Goose") AND ("protest")',
     '("Alviero Martini" OR "Coach" OR "Hugo Boss" OR "Jimmy Choo" OR "Lacoste" OR "Michael Kors" OR "Moncler" OR "Rituals" OR "Saint Laurent" OR "Versace" OR "Lindt") AND ("protest")',
@@ -1483,7 +1483,7 @@ const SEARCH_LIBRARY = [
   ]},
 ];
 
-function renderSearchLibrary() {
+var renderSearchLibrary = function() {
   const list = document.getElementById('articles-list');
   const owners = [...new Set(SEARCH_LIBRARY.map(s => s.owner))];
   const platformClass = { google: 'platform-google', twitter: 'platform-twitter', manual: 'platform-manual' };
@@ -1516,7 +1516,7 @@ function renderSearchLibrary() {
   '</div>';
 }
 
-function copyLibraryTerm(btn) {
+var copyLibraryTerm = function(btn) {
   const term = btn.dataset.term;
   const orig = btn.textContent;
   copyToClipboard(term).then(() => {
@@ -1527,11 +1527,11 @@ function copyLibraryTerm(btn) {
 }
 
 // ── FINDINGS (Supabase) ──
-const VILLAGES_LIST = ['BV - Bicester','KV - Kildare','MMV - Maasmechelen','WV - Wertheim','IV - Ingolstadt','LRV - Las Rozas','LRV - La Roca','LVV - La Vallee','FV - Fidenza','Roermond'];
-const CATEGORIES_LIST = ['Shooting','Stabbing','Bomb Threat','Explosion','Suspicious Package','Protest','Boycott','Retail Crime','Fraud','Shoplifting','Other Crime','Other'];
+var VILLAGES_LIST = ['BV - Bicester','KV - Kildare','MMV - Maasmechelen','WV - Wertheim','IV - Ingolstadt','LRV - Las Rozas','LRV - La Roca','LVV - La Vallee','FV - Fidenza','Roermond'];
+var CATEGORIES_LIST = ['Shooting','Stabbing','Bomb Threat','Explosion','Suspicious Package','Protest','Boycott','Retail Crime','Fraud','Shoplifting','Other Crime','Other'];
 let findingsData = [];
 
-function renderFindingsTab() {
+var renderFindingsTab = function() {
   const list = document.getElementById('articles-list');
   list.innerHTML =
     '<div class="findings-wrap">' +
@@ -1567,7 +1567,7 @@ function renderFindingsTab() {
   loadFindings();
 }
 
-async function loadFindings() {
+async var loadFindings = function() {
   try {
     const res = await fetch(SUPABASE_URL + '/rest/v1/findings?select=*&order=created_at.desc', {
       headers: { 'apikey': SUPABASE_ANON, 'Authorization': 'Bearer ' + SUPABASE_ANON }
@@ -1580,7 +1580,7 @@ async function loadFindings() {
   }
 }
 
-function renderFindingsTable() {
+var renderFindingsTable = function() {
   const el = document.getElementById('findings-table-body');
   if (!el) return;
   if (!findingsData.length) { el.innerHTML = '<div class="findings-empty">No findings yet.</div>'; return; }
@@ -1604,7 +1604,7 @@ function renderFindingsTable() {
     '</tbody></table>';
 }
 
-async function submitFinding() {
+async var submitFinding = function() {
   const name = localStorage.getItem('b4_note_name') || '';
   const finding = {
     date_of_incident: document.getElementById('f-date').value || null,
@@ -1643,7 +1643,7 @@ async function submitFinding() {
   }
 }
 
-async function deleteFinding(id) {
+async var deleteFinding = function(id) {
   if (!confirm('Delete this finding?')) return;
   await fetch(SUPABASE_URL + '/rest/v1/findings?id=eq.' + id, {
     method: 'DELETE',
@@ -1652,7 +1652,7 @@ async function deleteFinding(id) {
   loadFindings();
 }
 
-function exportFindingsExcel() {
+var exportFindingsExcel = function() {
   if (!findingsData.length) { alert('No findings to export.'); return; }
   const headers = ['Date of Incident','Publication Date','Location','Village','Nation','Category','Sub Category','Details','Source','Submitted By'];
   const rows = findingsData.map(f => [
