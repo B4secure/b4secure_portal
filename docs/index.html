@@ -728,7 +728,7 @@ body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--t
 <script>
 // ── CONFIG ──
 var SUPABASE_URL    = 'https://rrtswqqkkcuhsfywepdk.supabase.co';
-var SUPABASE_ANON   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJydHN3cXFra2N1aHNmeXdlcGRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxMzc2NDAsImV4cCI6MjA5MDcxMzY0MH0.gQRpoif-cLFZEvQPo_IR9poSVlOeZIaCQ1ggAqMAdzs';
+var SUPABASE_ANON   = 'sb_publishable_jjuBYW0o4SMre6IjmT3Eng_TjbdAVuy';
 var FEED_PASSWORD   = 'b4feeds';
 var JSONBIN_API_KEY = '$2a$10$f1mvpURB/E8w06pcDFlp9O9ks7U9gl8DUrdIQwDu7kE.L1CiHA4Wa';
 var JSONBIN_BIN_ID  = '69cbd79736566621a866ee80';
@@ -1035,30 +1035,41 @@ function submitFinding() {
   var name = localStorage.getItem(NAME_KEY) || '';
   var finding = {
     date_of_incident: document.getElementById('f-date').value || null,
-    published_date: document.getElementById('f-pubdate').value || null,
-    location:     document.getElementById('f-location').value.trim(),
-    Village:      document.getElementById('f-village').value,
-    Nation:       document.getElementById('f-nation').value.trim(),
-    Category:     document.getElementById('f-category').value,
-    sub_Category: document.getElementById('f-subcat').value.trim(),
-    details:      document.getElementById('f-details').value.trim(),
-    source:       document.getElementById('f-source').value.trim(),
-    submitted_by: name,
+    published_date:   document.getElementById('f-pubdate').value || null,
+    location:         document.getElementById('f-location').value.trim(),
+    Village:          document.getElementById('f-village').value,
+    Nation:           document.getElementById('f-nation').value.trim(),
+    Category:         document.getElementById('f-category').value,
+    sub_Category:     document.getElementById('f-subcat').value.trim(),
+    details:          document.getElementById('f-details').value.trim(),
+    source:           document.getElementById('f-source').value.trim(),
+    submitted_by:     name,
   };
   if (!finding.details) { alert('Please add details before submitting.'); return; }
   var btn = document.getElementById('findings-submit-btn');
   btn.textContent = 'Saving...'; btn.classList.add('saving');
   fetch(SUPABASE_URL + '/rest/v1/findings', {
     method: 'POST',
-    headers: { 'apikey': SUPABASE_ANON, 'Authorization': 'Bearer ' + SUPABASE_ANON, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
+    headers: { 
+      'apikey': SUPABASE_ANON, 
+      'Authorization': 'Bearer ' + SUPABASE_ANON, 
+      'Content-Type': 'application/json', 
+      'Prefer': 'return=minimal'
+    },
     body: JSON.stringify(finding)
   }).then(function(r) {
-    if (!r.ok) throw new Error('Failed');
+    if (!r.ok) {
+      return r.text().then(function(t) { throw new Error(r.status + ': ' + t); });
+    }
     btn.textContent = 'Submitted!';
     setTimeout(function() { btn.textContent = 'Submit Finding'; btn.classList.remove('saving'); }, 2000);
     ['f-date','f-pubdate','f-location','f-village','f-nation','f-category','f-subcat','f-details','f-source'].forEach(function(id) { var el = document.getElementById(id); if (el) el.value = ''; });
     loadFindings();
-  }).catch(function(e) { alert('Failed to save: ' + e.message); btn.textContent = 'Submit Finding'; btn.classList.remove('saving'); });
+  }).catch(function(e) { 
+    alert('Failed to save: ' + e.message); 
+    btn.textContent = 'Submit Finding'; 
+    btn.classList.remove('saving'); 
+  });
 }
 
 function deleteFinding(id) {
@@ -1099,6 +1110,7 @@ function buildSidebarFilters() {
     return;
   }
   var articles = feeds[activeTab] || [];
+  if (!articles.length) { catEl.innerHTML = ''; return; }
   var cats = [];
   articles.forEach(function(a) { var c = (a.search_name||'').replace(/_/g,' '); if (c && cats.indexOf(c) === -1) cats.push(c); });
   cats.sort();
