@@ -591,6 +591,23 @@ body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--t
 }
 .findings-del-btn:hover { color: #ef4444; }
 .findings-empty { text-align: center; padding: 30px; color: var(--text3); font-size: 13px; }
+
+/* DATE FILTER */
+.date-filter-wrap { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.date-filter-label { font-size: 12px; color: var(--text3); white-space: nowrap; }
+.date-filter-input {
+  font-family: 'DM Mono', monospace; font-size: 12px;
+  padding: 8px 10px; border: 1px solid var(--border2);
+  border-radius: 8px; background: #fff; color: var(--text);
+  outline: none; cursor: pointer;
+}
+.date-filter-input:focus { border-color: var(--gold); }
+.date-filter-clear {
+  font-size: 11px; color: var(--text3); background: none;
+  border: 1px solid var(--border); border-radius: 6px;
+  padding: 7px 10px; cursor: pointer; white-space: nowrap;
+}
+.date-filter-clear:hover { color: var(--text); border-color: var(--border2); }
 </style>
 </head>
 <body>
@@ -708,6 +725,13 @@ body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--t
 
   <div class="content">
     <div class="toolbar">
+      <div class="date-filter-wrap" id="date-filter-wrap" style="display:none">
+        <span class="date-filter-label">From</span>
+        <input class="date-filter-input" type="date" id="date-from" onchange="render()">
+        <span class="date-filter-label">To</span>
+        <input class="date-filter-input" type="date" id="date-to" onchange="render()">
+        <button class="date-filter-clear" onclick="clearDateFilter()">Clear</button>
+      </div>
       <div class="search-wrap">
         <svg class="search-icon" width="15" height="15" viewBox="0 0 16 16" fill="none">
           <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" stroke-width="1.5"/>
@@ -1093,8 +1117,12 @@ function getActiveArticles() { return feeds[activeTab] || []; }
 
 function getFiltered() {
   var q = document.getElementById('search').value.toLowerCase();
+  var dateFrom = document.getElementById('date-from') ? document.getElementById('date-from').value : '';
+  var dateTo   = document.getElementById('date-to')   ? document.getElementById('date-to').value   : '';
   return getActiveArticles().filter(function(a) {
     if (activeCategory !== 'all') { if ((a.search_name||'').replace(/_/g,' ') !== activeCategory) return false; }
+    if (activeTab === 'topic_daily' && dateFrom) { if (new Date(a.published) < new Date(dateFrom)) return false; }
+    if (activeTab === 'topic_daily' && dateTo)   { if (new Date(a.published) > new Date(dateTo + 'T23:59:59')) return false; }
     if (q) {
       var title = (a.title_en || a.title || '').toLowerCase();
       if (!title.includes(q) && !(a.village||'').toLowerCase().includes(q) && !(a.search_name||'').toLowerCase().includes(q)) return false;
@@ -1124,8 +1152,19 @@ function buildSidebarFilters() {
 function render() {
   var list    = document.getElementById('articles-list');
   var countEl = document.getElementById('results-count');
-  if (activeTab === 'search_library') { countEl.textContent = ''; document.getElementById('s-total').textContent = '—'; document.getElementById('s-tab').textContent = 'Search Library'; renderSearchLibrary(); return; }
-  if (activeTab === 'findings')       { countEl.textContent = ''; document.getElementById('s-total').textContent = '—'; document.getElementById('s-tab').textContent = 'Findings'; renderFindingsTab(); return; }
+  var toolbar = document.querySelector('.toolbar');
+  if (activeTab === 'search_library') {
+    countEl.textContent = ''; document.getElementById('s-total').textContent = '—'; document.getElementById('s-tab').textContent = 'Search Library';
+    if (toolbar) toolbar.style.display = 'none';
+    renderSearchLibrary(); return;
+  }
+  if (activeTab === 'findings') {
+    countEl.textContent = ''; document.getElementById('s-total').textContent = '—'; document.getElementById('s-tab').textContent = 'Findings';
+    if (toolbar) toolbar.style.display = 'none';
+    renderFindingsTab(); return;
+  }
+  if (toolbar) toolbar.style.display = '';
+  updateDateFilter();
 
   var filtered = getFiltered();
   var q = document.getElementById('search').value;
@@ -1255,6 +1294,7 @@ document.querySelectorAll('.tab-btn').forEach(function(btn) {
     activeCategory = 'all'; activeVillage = 'all';
     document.getElementById('search').value = '';
     buildSidebarFilters();
+    updateDateFilter();
     render();
   });
 });
