@@ -669,7 +669,7 @@ body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--t
     <div class="sidebar-logo-sub" style="font-size:10px;letter-spacing:0.35em;color:rgba(201,168,76,0.55);margin-top:2px">SCOPE</div>
   </div>
 
-  <div class="mode-toggle">
+  <div class="mode-toggle" style="display:flex;margin:14px 16px 4px;">
     <button class="mode-btn active" id="mode-village" onclick="setMode('village')">Village</button>
     <button class="mode-btn" id="mode-subscription" onclick="setMode('subscription')">Subscription</button>
   </div>
@@ -756,10 +756,7 @@ body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--t
     <button class="tab-btn" data-tab="cyber">
       Cyber Feed <span class="tab-badge" id="badge-cyber">0</span>
     </button>
-    <button class="tab-btn" data-tab="dashboard">
-      Dashboard
-    </button>
-    <button class="tab-btn" data-tab="search_library" onclick="document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active');activeTab='search_library';document.getElementById('results-count').textContent='';document.getElementById('articles-list').innerHTML='<div>Loading...</div>';renderSearchLibrary();">
+<button class="tab-btn" data-tab="search_library" onclick="document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active');activeTab='search_library';document.getElementById('results-count').textContent='';document.getElementById('articles-list').innerHTML='<div>Loading...</div>';renderSearchLibrary();">
       Search Library
     </button>
     <button class="tab-btn" data-tab="findings" onclick="document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active');activeTab='findings';document.getElementById('results-count').textContent='';document.getElementById('articles-list').innerHTML='<div>Loading...</div>';renderFindingsTab();">
@@ -1211,7 +1208,7 @@ function setMode(mode) {
   document.getElementById('metrics-subscription').style.display = mode === 'subscription' ? '' : 'none';
 
   // Show/hide tabs based on mode
-  var villageTabs   = ['village', 'dashboard', 'search_library', 'findings'];
+  var villageTabs   = ['village', 'search_library', 'findings'];
   var subscriptionTabs = ['topic_daily', 'topic_weekly', 'cyber'];
 
   document.querySelectorAll('.tab-btn').forEach(function(btn) {
@@ -1312,12 +1309,7 @@ function render() {
   var list    = document.getElementById('articles-list');
   var countEl = document.getElementById('results-count');
   var toolbar = document.querySelector('.toolbar');
-  if (activeTab === 'dashboard') {
-    countEl.textContent = ''; document.getElementById('s-total').textContent = '—'; document.getElementById('s-tab').textContent = 'Dashboard';
-    var tb2 = document.querySelector('.toolbar'); if (tb2) tb2.style.display = 'none';
-    renderDashboard(); return;
-  }
-  if (activeTab === 'search_library') {
+if (activeTab === 'search_library') {
     countEl.textContent = ''; document.getElementById('s-total').textContent = '—'; document.getElementById('s-tab').textContent = 'Search Library';
     if (toolbar) toolbar.style.display = 'none';
     renderSearchLibrary(); return;
