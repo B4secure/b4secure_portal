@@ -608,6 +608,40 @@ body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--t
   padding: 7px 10px; cursor: pointer; white-space: nowrap;
 }
 .date-filter-clear:hover { color: var(--text); border-color: var(--border2); }
+
+/* MODE TOGGLE */
+.mode-toggle {
+  display: flex; margin: 14px 16px 0;
+  border-radius: 8px; overflow: hidden;
+  border: 1px solid rgba(201,168,76,0.25);
+}
+.mode-btn {
+  flex: 1; font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 500;
+  padding: 8px 4px; border: none; cursor: pointer;
+  letter-spacing: 0.06em; text-transform: uppercase; transition: all 0.2s;
+  background: rgba(255,255,255,0.04); color: rgba(201,168,76,0.6);
+}
+.mode-btn.active { background: var(--gold); color: var(--emerald-deep); }
+.mode-btn:first-child { border-right: 1px solid rgba(201,168,76,0.2); }
+
+/* DASHBOARD */
+.dashboard-wrap { display: flex; flex-direction: column; gap: 20px; }
+.dash-card {
+  background: #fff; border: 1px solid rgba(201,168,76,0.15);
+  border-radius: 12px; overflow: hidden;
+}
+.dash-card-header {
+  background: var(--emerald-deep); padding: 10px 18px;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 15px; font-weight: 500; color: var(--gold-light);
+}
+.dash-card-body { padding: 16px 18px; }
+.dash-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.dash-bar-label { font-size: 12px; color: var(--text2); width: 180px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dash-bar-track { flex: 1; background: #f0ece4; border-radius: 4px; height: 18px; position: relative; }
+.dash-bar-fill { height: 100%; border-radius: 4px; background: var(--emerald); transition: width 0.4s; }
+.dash-bar-count { font-size: 12px; color: var(--text3); font-family: 'DM Mono', monospace; width: 32px; text-align: right; flex-shrink: 0; }
+.dash-empty { font-size: 13px; color: var(--text3); text-align: center; padding: 20px; }
 </style>
 </head>
 <body>
@@ -633,6 +667,11 @@ body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--t
     <div class="sidebar-logo-name">B4 Secure</div>
     <div class="sidebar-logo-sub">Intelligence Portal</div>
     <div class="sidebar-logo-sub" style="font-size:10px;letter-spacing:0.35em;color:rgba(201,168,76,0.55);margin-top:2px">SCOPE</div>
+  </div>
+
+  <div class="mode-toggle">
+    <button class="mode-btn active" id="mode-village" onclick="setMode('village')">Village</button>
+    <button class="mode-btn" id="mode-subscription" onclick="setMode('subscription')">Subscription</button>
   </div>
 
   <div class="sidebar-section">
@@ -669,18 +708,25 @@ body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--t
     </div>
   </div>
 
-  <div class="metrics">
+  <div class="metrics" id="metrics-village">
     <div class="metric">
       <div class="metric-label">Village articles</div>
       <div class="metric-value" id="m-village">—</div>
       <div class="metric-sub" id="m-village-sub">Loading…</div>
     </div>
     <div class="metric">
+      <div class="metric-label">Total</div>
+      <div class="metric-value" id="m-total">—</div>
+      <div class="metric-sub" id="m-updated">—</div>
+    </div>
+  </div>
+  <div class="metrics" id="metrics-subscription" style="display:none">
+    <div class="metric">
       <div class="metric-label">Topic daily</div>
       <div class="metric-value" id="m-topic_daily">—</div>
       <div class="metric-sub" id="m-topic_daily-sub">Loading…</div>
     </div>
-    <div class="metric" style="border-left:1px solid rgba(201,168,76,0.1)">
+    <div class="metric">
       <div class="metric-label">Topic weekly</div>
       <div class="metric-value" id="m-topic_weekly">—</div>
       <div class="metric-sub" id="m-topic_weekly-sub">Loading…</div>
@@ -692,8 +738,8 @@ body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--t
     </div>
     <div class="metric">
       <div class="metric-label">Total</div>
-      <div class="metric-value" id="m-total">—</div>
-      <div class="metric-sub" id="m-updated">—</div>
+      <div class="metric-value" id="m-total-sub">—</div>
+      <div class="metric-sub" id="m-updated-sub">—</div>
     </div>
   </div>
 
@@ -770,7 +816,7 @@ var FEEDS = {
 };
 
 var FEED_BORDER   = { village: '#22c55e', topic_daily: '#6366f1', topic_weekly: '#4f46e5', cyber: '#f43f5e' };
-var FEED_LABEL    = { village: 'Village', topic_daily: 'Topic · Daily', topic_weekly: 'Topic · Weekly', cyber: 'Cyber', search_library: 'Search Library', findings: 'Findings' };
+var FEED_LABEL    = { village: 'Village', topic_daily: 'Topic · Daily', topic_weekly: 'Topic · Weekly', cyber: 'Cyber', dashboard: 'Dashboard', search_library: 'Search Library', findings: 'Findings' };
 var FEED_TAG_CLASS= { village: 'tag-feed-village', topic_daily: 'tag-feed-topic', topic_weekly: 'tag-feed-topic', cyber: 'tag-feed-cyber' };
 
 var VILLAGES_LIST   = ['BV - Bicester','KV - Kildare','MMV - Maasmechelen','WV - Wertheim','IV - Ingolstadt','LRV - Las Rozas','LRV - La Roca','LVV - La Vallee','FV - Fidenza','Roermond'];
@@ -1150,6 +1196,102 @@ function buildSidebarFilters() {
 }
 
 
+
+// ── MODE TOGGLE ──
+var currentMode = 'village';
+
+function setMode(mode) {
+  currentMode = mode;
+  document.getElementById('mode-village').classList.toggle('active', mode === 'village');
+  document.getElementById('mode-subscription').classList.toggle('active', mode === 'subscription');
+  document.getElementById('metrics-village').style.display      = mode === 'village'      ? '' : 'none';
+  document.getElementById('metrics-subscription').style.display = mode === 'subscription' ? '' : 'none';
+
+  // Show/hide tabs based on mode
+  var villageTabs   = ['village', 'dashboard', 'search_library', 'findings'];
+  var subscriptionTabs = ['topic_daily', 'topic_weekly', 'cyber'];
+
+  document.querySelectorAll('.tab-btn').forEach(function(btn) {
+    var tab = btn.dataset.tab;
+    if (mode === 'village') {
+      btn.style.display = villageTabs.indexOf(tab) !== -1 ? '' : 'none';
+    } else {
+      btn.style.display = subscriptionTabs.indexOf(tab) !== -1 ? '' : 'none';
+    }
+  });
+
+  // Switch to first visible tab
+  var firstTab = mode === 'village' ? 'village' : 'topic_daily';
+  document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+  var firstBtn = document.querySelector('.tab-btn[data-tab="' + firstTab + '"]');
+  if (firstBtn) firstBtn.classList.add('active');
+  activeTab = firstTab;
+  activeCategory = 'all';
+  buildSidebarFilters();
+  render();
+}
+
+// ── VILLAGE DASHBOARD ──
+function renderDashboard() {
+  var list = document.getElementById('articles-list');
+  var articles = feeds.village || [];
+
+  if (!articles.length) {
+    list.innerHTML = '<div class="empty"><div class="empty-title">No village data yet</div><div class="empty-sub">Run the village feed to see dashboard stats.</div></div>';
+    return;
+  }
+
+  // Count by village
+  var villageCounts = {};
+  articles.forEach(function(a) {
+    var v = a.village || 'Unknown';
+    villageCounts[v] = (villageCounts[v] || 0) + 1;
+  });
+
+  // Count by country
+  var countryCounts = {};
+  articles.forEach(function(a) {
+    var c = a.country || 'Unknown';
+    countryCounts[c] = (countryCounts[c] || 0) + 1;
+  });
+
+  // Count by category/search_name — extract incident type keywords
+  var tacticCounts = {};
+  var tacticKeywords = ['Stabbing', 'Shooting', 'Explosion', 'Bomb', 'Protest', 'Boycott', 'Suspicious Package', 'Retail Crime', 'Shoplifting', 'PETA', 'Logistics'];
+  articles.forEach(function(a) {
+    var cat = (a.search_name || a.category || '').replace(/_/g,' ');
+    var matched = false;
+    tacticKeywords.forEach(function(kw) {
+      if (cat.toLowerCase().indexOf(kw.toLowerCase()) !== -1) {
+        tacticCounts[kw] = (tacticCounts[kw] || 0) + 1;
+        matched = true;
+      }
+    });
+    if (!matched && cat) {
+      tacticCounts[cat] = (tacticCounts[cat] || 0) + 1;
+    }
+  });
+
+  function makeBarChart(counts, color) {
+    var sorted = Object.keys(counts).sort(function(a,b) { return counts[b]-counts[a]; }).slice(0,10);
+    var max = counts[sorted[0]] || 1;
+    return sorted.map(function(k) {
+      var pct = Math.round((counts[k]/max)*100);
+      return '<div class="dash-bar-row">' +
+        '<div class="dash-bar-label" title="' + k + '">' + k + '</div>' +
+        '<div class="dash-bar-track"><div class="dash-bar-fill" style="width:' + pct + '%;background:' + color + '"></div></div>' +
+        '<div class="dash-bar-count">' + counts[k] + '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  list.innerHTML = '<div class="dashboard-wrap">' +
+    '<div class="dash-card"><div class="dash-card-header">Articles by Village</div><div class="dash-card-body">' + (Object.keys(villageCounts).length ? makeBarChart(villageCounts, 'var(--emerald)') : '<div class="dash-empty">No data</div>') + '</div></div>' +
+    '<div class="dash-card"><div class="dash-card-header">Articles by Country</div><div class="dash-card-body">' + (Object.keys(countryCounts).length ? makeBarChart(countryCounts, '#6366f1') : '<div class="dash-empty">No data</div>') + '</div></div>' +
+    '<div class="dash-card"><div class="dash-card-header">Top Incident Types</div><div class="dash-card-body">' + (Object.keys(tacticCounts).length ? makeBarChart(tacticCounts, '#f43f5e') : '<div class="dash-empty">No data</div>') + '</div></div>' +
+  '</div>';
+}
+
 function updateDateFilter() {
   var wrap = document.getElementById('date-filter-wrap');
   if (wrap) wrap.style.display = (activeTab === 'topic_daily') ? 'flex' : 'none';
@@ -1167,6 +1309,11 @@ function render() {
   var list    = document.getElementById('articles-list');
   var countEl = document.getElementById('results-count');
   var toolbar = document.querySelector('.toolbar');
+  if (activeTab === 'dashboard') {
+    countEl.textContent = ''; document.getElementById('s-total').textContent = '—'; document.getElementById('s-tab').textContent = 'Dashboard';
+    var tb2 = document.querySelector('.toolbar'); if (tb2) tb2.style.display = 'none';
+    renderDashboard(); return;
+  }
   if (activeTab === 'search_library') {
     countEl.textContent = ''; document.getElementById('s-total').textContent = '—'; document.getElementById('s-tab').textContent = 'Search Library';
     if (toolbar) toolbar.style.display = 'none';
@@ -1243,8 +1390,11 @@ function updateFeedStatus() {
   document.getElementById('m-topic_daily').textContent  = feeds.topic_daily.length  || '—';
   document.getElementById('m-topic_weekly').textContent = feeds.topic_weekly.length || '—';
   document.getElementById('m-cyber').textContent        = feeds.cyber.length        || '—';
-  document.getElementById('m-total').textContent        = total || '—';
+  document.getElementById('m-total').textContent        = feeds.village.length || '—';
   document.getElementById('m-updated').textContent      = 'Updated ' + new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+  var subTotal = feeds.topic_daily.length + feeds.topic_weekly.length + feeds.cyber.length;
+  document.getElementById('m-total-sub').textContent    = subTotal || '—';
+  document.getElementById('m-updated-sub').textContent  = 'Updated ' + new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
   document.getElementById('badge-village').textContent      = feeds.village.length;
   document.getElementById('badge-topic_daily').textContent  = feeds.topic_daily.length;
   document.getElementById('badge-topic_weekly').textContent = feeds.topic_weekly.length;
@@ -1404,7 +1554,7 @@ function savePromptName() {
 }
 var pni = document.getElementById('prompt-name-input'); if (pni) pni.addEventListener('keydown', function(e) { if (e.key === 'Enter') savePromptName(); });
 
-function initWithName() { init(); checkNamePrompt(); }
+function initWithName() { init(); checkNamePrompt(); setTimeout(function() { setMode("village"); }, 100); }
 if (checkGate()) initWithName();
 </script>
 
