@@ -643,7 +643,6 @@ body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--t
 .dash-bar-count { font-size: 12px; color: var(--text3); font-family: 'DM Mono', monospace; width: 32px; text-align: right; flex-shrink: 0; }
 .dash-empty { font-size: 13px; color: var(--text3); text-align: center; padding: 20px; }
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -708,7 +707,7 @@ body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--t
     </div>
   </div>
 
-  <div class="metrics" id="metrics-village" style="grid-template-columns:1fr 1fr 2fr">
+  <div class="metrics" id="metrics-village" >
     <div class="metric">
       <div class="metric-label">Village articles</div>
       <div class="metric-value" id="m-village">—</div>
@@ -719,10 +718,7 @@ body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--t
       <div class="metric-value" id="m-total" style="font-size:18px">—</div>
       <div class="metric-sub" id="m-updated">—</div>
     </div>
-    <div class="metric" id="metric-pie-wrap" style="padding:10px 16px">
-      <div class="metric-label" style="margin-bottom:6px">Top villages today</div>
-      <canvas id="village-pie" height="60" style="max-width:100%"></canvas>
-    </div>
+
   </div>
   <div class="metrics" id="metrics-subscription" style="display:none">
     <div class="metric">
@@ -1297,32 +1293,6 @@ function renderDashboard() {
 }
 
 
-var villageChart = null;
-function renderVillagePie() {
-  var articles = feeds.village || [];
-  if (!articles.length) return;
-  var counts = {};
-  articles.forEach(function(a) { if (a.village) counts[a.village] = (counts[a.village]||0)+1; });
-  var sorted = Object.keys(counts).sort(function(a,b){return counts[b]-counts[a];}).slice(0,6);
-  var colors = ['#1a4a2e','#2d7a4f','#c9a84c','#e2c47a','#6366f1','#f43f5e'];
-  var ctx = document.getElementById('village-pie');
-  if (!ctx) return;
-  if (villageChart) { villageChart.destroy(); }
-  villageChart = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels: sorted,
-      datasets: [{ data: sorted.map(function(k){return counts[k];}), backgroundColor: colors, borderWidth: 1 }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { position: 'right', labels: { font: { size: 10, family: 'Jost' }, color: '#4a3f28', boxWidth: 10, padding: 6 } }
-      }
-    }
-  });
-}
-
 function updateDateFilter() {
   var wrap = document.getElementById('date-filter-wrap');
   if (wrap) wrap.style.display = (activeTab === 'topic_daily') ? 'flex' : 'none';
@@ -1445,7 +1415,6 @@ function loadFeed(key, url) {
   }).then(function() {
     updateFeedStatus();
     if (activeTab === key) { buildSidebarFilters(); render(); }
-  if (key === 'village') { setTimeout(renderVillagePie, 100); }
   });
 }
 
