@@ -1350,6 +1350,31 @@ function renderDashboard() {
 
 
 // ── MANUAL ARTICLE ADD ──
+var MANUAL_BIN_KEY = 'b4_manual_articles';
+var MANUAL_JSONBIN_URL = 'https://api.jsonbin.io/v3/b/' + JSONBIN_BIN_ID;
+
+function loadManualArticles() {
+  // Store manual articles in a separate key within the same bin approach
+  // Use localStorage as persistent storage shared via JSONBin on save
+  try {
+    var stored = localStorage.getItem(MANUAL_BIN_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch(e) { return []; }
+}
+
+function saveManualArticles(articles) {
+  try { localStorage.setItem(MANUAL_BIN_KEY, JSON.stringify(articles)); } catch(e) {}
+}
+
+function injectManualArticles() {
+  var manual = loadManualArticles();
+  if (!manual.length) return;
+  // Remove any existing manual articles first
+  feeds.village = feeds.village.filter(function(a) { return !a.manual; });
+  // Add manual articles at the top
+  manual.forEach(function(a) { feeds.village.unshift(a); });
+}
+
 function openAddModal() {
   document.getElementById('add-modal').classList.remove('hidden');
   document.getElementById('am-title').focus();
@@ -1373,8 +1398,20 @@ function submitAddArticle() {
     published:   new Date().toISOString(),
     manual:      true,
   };
+  var manual = loadManualArticles();
+  manual.unshift(article);
+  saveManualArticles(manual);
   feeds.village.unshift(article);
   closeAddModal();
+  buildSidebarFilters();
+  render();
+  updateFeedStatus();
+}
+
+function deleteManualArticle(ts) {
+  var manual = loadManualArticles().filter(function(a) { return a.published !== ts; });
+  saveManualArticles(manual);
+  feeds.village = feeds.village.filter(function(a) { return a.published !== ts; });
   buildSidebarFilters();
   render();
   updateFeedStatus();
@@ -1442,7 +1479,7 @@ if (activeTab === 'search_library') {
     return '<' + tag + ' class="article-card" ' + linkAttr + ' style="border-left-color:' + border + '">' +
       '<div class="article-tags"><span class="tag ' + tagClass + '">' + (FEED_LABEL[activeTab]||'') + '</span>' +
       (a.village ? '<span class="tag tag-village">' + a.village + '</span>' : '') +
-      (cat ? '<span class="tag tag-category">' + cat + '</span>' : '') + langTag + (typeof manualTag !== 'undefined' ? manualTag : '') + '</div>' +
+      (cat ? '<span class="tag tag-category">' + cat + '</span>' : '') + langTag + (typeof manualTag !== 'undefined' ? manualTag : '') + (typeof manualDel !== 'undefined' ? manualDel : '') + '</div>' +
       titleHtml + (showOrig ? '<div class="article-title-orig">' + a.title + '</div>' : '') +
       '<div class="article-meta">' + (source ? '<span class="article-source">' + source + '</span><span class="article-dot">·</span>' : '') + (date ? '<span class="article-date">' + date + '</span>' : '') + (ago ? '<span class="article-dot">·</span><span class="article-time">' + ago + '</span>' : '') + '</div>' +
       (isVillage ? (
