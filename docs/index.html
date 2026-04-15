@@ -642,6 +642,57 @@ body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--t
 .dash-bar-fill { height: 100%; border-radius: 4px; background: var(--emerald); transition: width 0.4s; }
 .dash-bar-count { font-size: 12px; color: var(--text3); font-family: 'DM Mono', monospace; width: 32px; text-align: right; flex-shrink: 0; }
 .dash-empty { font-size: 13px; color: var(--text3); text-align: center; padding: 20px; }
+
+/* ADD ARTICLE */
+.add-article-btn {
+  font-family: 'Jost', sans-serif; font-size: 13px; font-weight: 500;
+  padding: 9px 14px; border-radius: 8px;
+  border: 1px solid var(--border2); background: var(--emerald-deep);
+  color: var(--gold-light); cursor: pointer; transition: all 0.15s;
+  display: flex; align-items: center; gap: 6px; white-space: nowrap;
+  flex-shrink: 0;
+}
+.add-article-btn:hover { background: var(--emerald); border-color: var(--gold); }
+
+#add-modal {
+  position: fixed; inset: 0; z-index: 300;
+  background: rgba(13,40,24,0.7);
+  display: flex; align-items: center; justify-content: center;
+}
+#add-modal.hidden { display: none; }
+.add-modal-box {
+  background: var(--cream); border-radius: 14px;
+  padding: 24px 28px; width: 100%; max-width: 480px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+.add-modal-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px; font-weight: 500; color: var(--emerald-deep);
+  margin-bottom: 16px;
+}
+.add-modal-field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+.add-modal-label { font-size: 11px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; }
+.add-modal-input, .add-modal-select {
+  font-family: 'Jost', sans-serif; font-size: 13px;
+  padding: 8px 10px; border: 1px solid rgba(201,168,76,0.25);
+  border-radius: 7px; outline: none; color: var(--text); background: #fff;
+}
+.add-modal-input:focus, .add-modal-select:focus { border-color: var(--gold); }
+.add-modal-btns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+.add-modal-cancel {
+  font-family: 'Jost', sans-serif; font-size: 13px;
+  padding: 9px 18px; border-radius: 8px;
+  border: 1px solid var(--border2); background: transparent;
+  color: var(--text3); cursor: pointer;
+}
+.add-modal-submit {
+  font-family: 'Jost', sans-serif; font-size: 13px; font-weight: 500;
+  padding: 9px 18px; border-radius: 8px;
+  background: var(--emerald-deep); color: var(--gold-light);
+  border: 1px solid rgba(201,168,76,0.3); cursor: pointer;
+}
+.add-modal-submit:hover { background: var(--emerald); }
+.manual-tag { background: #fff8e6; color: #92670a; border: 1px solid #e8d49a; }
 </style>
 </head>
 <body>
@@ -785,6 +836,10 @@ body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--t
         </svg>
         <input class="search-input" type="text" id="search" placeholder="Search articles…" autocomplete="off">
       </div>
+      <button class="add-article-btn" id="add-article-btn" onclick="openAddModal()" style="display:none">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 2v12M2 8h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        Add Article
+      </button>
       <button class="copy-btn" id="copy-btn">
         <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M11 5V3a2 2 0 00-2-2H3a2 2 0 00-2 2v6a2 2 0 002 2h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
         Copy
@@ -1293,6 +1348,43 @@ function renderDashboard() {
 }
 
 
+
+// ── MANUAL ARTICLE ADD ──
+function openAddModal() {
+  document.getElementById('add-modal').classList.remove('hidden');
+  document.getElementById('am-title').focus();
+}
+function closeAddModal() {
+  document.getElementById('add-modal').classList.add('hidden');
+  ['am-title','am-url','am-village','am-category'].forEach(function(id) {
+    var el = document.getElementById(id); if (el) el.value = '';
+  });
+}
+function submitAddArticle() {
+  var title = document.getElementById('am-title').value.trim();
+  if (!title) { document.getElementById('am-title').focus(); return; }
+  var article = {
+    title:       title,
+    title_en:    title,
+    link:        document.getElementById('am-url').value.trim() || '#',
+    village:     document.getElementById('am-village').value,
+    search_name: document.getElementById('am-category').value || 'Manual',
+    category:    document.getElementById('am-category').value || 'Manual',
+    published:   new Date().toISOString(),
+    manual:      true,
+  };
+  feeds.village.unshift(article);
+  closeAddModal();
+  buildSidebarFilters();
+  render();
+  updateFeedStatus();
+}
+
+function updateAddBtn() {
+  var btn = document.getElementById('add-article-btn');
+  if (btn) btn.style.display = activeTab === 'village' ? 'flex' : 'none';
+}
+
 function updateDateFilter() {
   var wrap = document.getElementById('date-filter-wrap');
   if (wrap) wrap.style.display = (activeTab === 'topic_daily') ? 'flex' : 'none';
@@ -1322,6 +1414,7 @@ if (activeTab === 'search_library') {
   }
   if (toolbar) toolbar.style.display = '';
   updateDateFilter();
+  updateAddBtn();
 
   var filtered = getFiltered();
   var q = document.getElementById('search').value;
@@ -1349,7 +1442,7 @@ if (activeTab === 'search_library') {
     return '<' + tag + ' class="article-card" ' + linkAttr + ' style="border-left-color:' + border + '">' +
       '<div class="article-tags"><span class="tag ' + tagClass + '">' + (FEED_LABEL[activeTab]||'') + '</span>' +
       (a.village ? '<span class="tag tag-village">' + a.village + '</span>' : '') +
-      (cat ? '<span class="tag tag-category">' + cat + '</span>' : '') + langTag + '</div>' +
+      (cat ? '<span class="tag tag-category">' + cat + '</span>' : '') + langTag + (typeof manualTag !== 'undefined' ? manualTag : '') + '</div>' +
       titleHtml + (showOrig ? '<div class="article-title-orig">' + a.title + '</div>' : '') +
       '<div class="article-meta">' + (source ? '<span class="article-source">' + source + '</span><span class="article-dot">·</span>' : '') + (date ? '<span class="article-date">' + date + '</span>' : '') + (ago ? '<span class="article-dot">·</span><span class="article-time">' + ago + '</span>' : '') + '</div>' +
       (isVillage ? (
@@ -1455,6 +1548,7 @@ document.querySelectorAll('.tab-btn').forEach(function(btn) {
     document.getElementById('search').value = '';
     buildSidebarFilters();
     updateDateFilter();
+    updateAddBtn();
     render();
   });
 });
@@ -1589,6 +1683,60 @@ if (checkGate()) initWithName();
     <input class="name-prompt-input" id="prompt-name-input" type="text" placeholder="Your name" maxlength="30">
     <button class="name-prompt-btn" onclick="savePromptName()">Continue</button>
     <div class="name-prompt-err" id="prompt-name-err"></div>
+  </div>
+</div>
+
+
+<div id="add-modal" class="hidden">
+  <div class="add-modal-box">
+    <div class="add-modal-title">Add Article Manually</div>
+    <div class="add-modal-field">
+      <label class="add-modal-label">Title</label>
+      <input class="add-modal-input" id="am-title" type="text" placeholder="Article headline">
+    </div>
+    <div class="add-modal-field">
+      <label class="add-modal-label">URL (optional)</label>
+      <input class="add-modal-input" id="am-url" type="text" placeholder="https://...">
+    </div>
+    <div style="display:flex;gap:10px">
+      <div class="add-modal-field" style="flex:1">
+        <label class="add-modal-label">Village</label>
+        <select class="add-modal-select" id="am-village">
+          <option value="">Select...</option>
+          <option>Bicester Village</option>
+          <option>Kildare Village</option>
+          <option>Maasmechelen Village</option>
+          <option>Wertheim Village</option>
+          <option>Ingolstadt Village</option>
+          <option>Las Rozas Village</option>
+          <option>La Roca Village</option>
+          <option>La Vallee Village</option>
+          <option>Fidenza Village</option>
+          <option>Roermond Outlet</option>
+          <option>General</option>
+        </select>
+      </div>
+      <div class="add-modal-field" style="flex:1">
+        <label class="add-modal-label">Category</label>
+        <select class="add-modal-select" id="am-category">
+          <option value="">Select...</option>
+          <option>Stabbing</option>
+          <option>Shooting</option>
+          <option>Bomb Threat</option>
+          <option>Explosion</option>
+          <option>Protest</option>
+          <option>Boycott</option>
+          <option>Retail Crime</option>
+          <option>Shoplifting</option>
+          <option>PETA</option>
+          <option>Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="add-modal-btns">
+      <button class="add-modal-cancel" onclick="closeAddModal()">Cancel</button>
+      <button class="add-modal-submit" onclick="submitAddArticle()">Add to Feed</button>
+    </div>
   </div>
 </div>
 
