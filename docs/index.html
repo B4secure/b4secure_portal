@@ -1022,6 +1022,8 @@ var activeVillage  = 'all';
 var chatOpen    = false;
 var cachedMsgs  = [];
 var findingsData = [];
+var MANUAL_KEY = 'b4_manual_articles_v2';
+var DELETED_KEY = 'b4_deleted_articles_v2';
 
 // ── UTILS ──
 function escHtml(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -1055,13 +1057,81 @@ function extractSource(link) {
   catch(e) { return ''; }
 }
 
+function articleId(a) {
+  return btoa(unescape(encodeURIComponent(
+    (a.link || '') + '|' + (a.title_en || a.title || '') + '|' + (a.published || '')
+  ))).slice(0, 80);
+}
+
+function getManualArticles() {
+  try { return JSON.parse(localStorage.getItem(MANUAL_KEY) || '{}'); }
+  catch(e) { return {}; }
+}
+
+function saveManualArticlesByTab(data) {
+  localStorage.setItem(MANUAL_KEY, JSON.stringify(data));
+}
+
+function getDeletedArticles() {
+  try { return JSON.parse(localStorage.getItem(DELETED_KEY) || '{}'); }
+  catch(e) { return {}; }
+}
+
+function saveDeletedArticles(data) {
+  localStorage.setItem(DELETED_KEY, JSON.stringify(data));
+}
+
+function applyLocalChanges(key) {
+  var deleted = getDeletedArticles();
+  var manual = getManualArticles();
+
+  var deletedForTab = deleted[key] || [];
+  feeds[key] = (feeds[key] || []).filter(function(a) {
+    return deletedForTab.indexOf(articleId(a)) === -1;
+  });
+
+  if (manual[key] && manual[key].length) {
+    manual[key].forEach(function(a) {
+      if (!feeds[key].some(function(existing) { return articleId(existing) === articleId(a); })) {
+        feeds[key].unshift(a);
+      }
+    });
+  }
+}
+
+function deleteArticle(tab, id) {
+  if (!confirm('Delete this article from the portal view?')) return;
+
+  var deleted = getDeletedArticles();
+  if (!deleted[tab]) deleted[tab] = [];
+  if (deleted[tab].indexOf(id) === -1) deleted[tab].push(id);
+  saveDeletedArticles(deleted);
+
+  feeds[tab] = feeds[tab].filter(function(a) {
+    return articleId(a) !== id;
+  });
+
+  buildSidebarFilters();
+  updateFeedStatus();
+  render();
+}
+
 // ── CLIPBOARD BUTTONS ──
 function copyArticleBtn(btn) {
-  var text = '[' + btn.dataset.cat + '] ' + btn.dataset.date + '\n' + btn.dataset.title;
+  var text =
+    '[' + btn.dataset.cat + '] ' + btn.dataset.date + '\n' +
+    btn.dataset.title + '\n' +
+    btn.dataset.link;
+
   copyToClipboard(text).then(function() {
-    btn.textContent = 'Copied!'; btn.classList.add('copied-a');
-    setTimeout(function() { btn.innerHTML = '<svg width="11" height="11" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M11 5V3a2 2 0 00-2-2H3a2 2 0 00-2 2v6a2 2 0 002 2h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> Copy article'; btn.classList.remove('copied-a'); }, 2000);
-  }).catch(function() { btn.textContent = 'Failed'; setTimeout(function() { btn.textContent = 'Copy article'; }, 2000); });
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied-a');
+
+    setTimeout(function() {
+      btn.innerHTML = '<svg width="11" height="11" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M11 5V3a2 2 0 00-2-2H3a2 2 0 00-2 2v6a2 2 0 002 2h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> Copy article';
+      btn.classList.remove('copied-a');
+    }, 2000);
+  });
 }
 
 function copyLibraryTerm(btn) {
@@ -1387,25 +1457,37 @@ function closeAddModal() {
 }
 function submitAddArticle() {
   var title = document.getElementById('am-title').value.trim();
-  if (!title) { document.getElementById('am-title').focus(); return; }
+
+  if (!title) {
+    document.getElementById('am-title').focus();
+    return;
+  }
+
+  var tab = activeTab;
+
   var article = {
-    title:       title,
-    title_en:    title,
-    link:        document.getElementById('am-url').value.trim() || '#',
-    village:     document.getElementById('am-village').value,
+    title: title,
+    title_en: title,
+    link: document.getElementById('am-url').value.trim() || '#',
+    village: document.getElementById('am-village').value,
     search_name: document.getElementById('am-category').value || 'Manual',
-    category:    document.getElementById('am-category').value || 'Manual',
-    published:   new Date().toISOString(),
-    manual:      true,
+    category: document.getElementById('am-category').value || 'Manual',
+    published: new Date().toISOString(),
+    manual: true
   };
-  var manual = loadManualArticles();
-  manual.unshift(article);
-  saveManualArticles(manual);
-  feeds.village.unshift(article);
+
+  var manual = getManualArticles();
+  if (!manual[tab]) manual[tab] = [];
+
+  manual[tab].unshift(article);
+  saveManualArticlesByTab(manual);
+
+  feeds[tab].unshift(article);
+
   closeAddModal();
   buildSidebarFilters();
-  render();
   updateFeedStatus();
+  render();
 }
 
 function deleteManualArticle(ts) {
@@ -1419,7 +1501,11 @@ function deleteManualArticle(ts) {
 
 function updateAddBtn() {
   var btn = document.getElementById('add-article-btn');
-  if (btn) btn.style.display = activeTab === 'village' ? 'flex' : 'none';
+  if (!btn) return;
+
+  btn.style.display = ['village', 'topic_daily', 'topic_weekly'].indexOf(activeTab) !== -1
+    ? 'flex'
+    : 'none';
 }
 
 function updateDateFilter() {
@@ -1475,31 +1561,66 @@ if (activeTab === 'search_library') {
     var tag = isVillage ? 'div' : 'a';
     var linkAttr = isVillage ? '' : 'href="' + a.link + '" target="_blank" rel="noopener"';
     var titleHtml = isVillage ? '<a href="' + a.link + '" target="_blank" rel="noopener" class="article-title" style="text-decoration:none;color:inherit">' + title + '</a>' : '<div class="article-title">' + title + '</div>';
+    var id = articleId(a);
+    var manualTag = a.manual
+    ? '<span class="tag manual-tag">Manual</span>'
+    : '';
+    var deleteBtn =
+    '<button class="article-copy-btn" style="background:#7f1d1d;color:#fff;border-color:#991b1b" onclick="event.preventDefault();event.stopPropagation();deleteArticle(\'' + activeTab + '\', \'' + id + '\')">Delete</button>';
 
-    return '<' + tag + ' class="article-card" ' + linkAttr + ' style="border-left-color:' + border + '">' +
-      '<div class="article-tags"><span class="tag ' + tagClass + '">' + (FEED_LABEL[activeTab]||'') + '</span>' +
-      (a.village ? '<span class="tag tag-village">' + a.village + '</span>' : '') +
-      (cat ? '<span class="tag tag-category">' + cat + '</span>' : '') + langTag + (typeof manualTag !== 'undefined' ? manualTag : '') + (typeof manualDel !== 'undefined' ? manualDel : '') + '</div>' +
-      titleHtml + (showOrig ? '<div class="article-title-orig">' + a.title + '</div>' : '') +
-      '<div class="article-meta">' + (source ? '<span class="article-source">' + source + '</span><span class="article-dot">·</span>' : '') + (date ? '<span class="article-date">' + date + '</span>' : '') + (ago ? '<span class="article-dot">·</span><span class="article-time">' + ago + '</span>' : '') + '</div>' +
-      (isVillage ? (
-        (queryText ? '<div class="article-query-wrap"><div class="article-query-label"><span class="article-query-title">Search query — select text to copy</span></div><div class="article-query-text">' + escHtml(queryText) + '</div></div>' : '') +
-        '<div class="article-footer"><button class="article-copy-btn" data-date="' + date.replace(/"/g,'&quot;') + '" data-title="' + title.replace(/"/g,'&quot;').replace(/'/g,'&#39;') + '" data-link="' + a.link.replace(/"/g,'&quot;') + '" data-cat="' + cat.replace(/"/g,'&quot;') + '" onclick="event.preventDefault();copyArticleBtn(this)"><svg width="11" height="11" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M11 5V3a2 2 0 00-2-2H3a2 2 0 00-2 2v6a2 2 0 002 2h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Copy article</button></div>'
-      ) : '') +
-    '</' + tag + '>';
-  }).join('');
-}
+    return '<' + tag + ' class="article-card" ' + linkAttr + ' style="border-left-color:' + border + '">' + '<div class="article-tags"><span class="tag ' + tagClass + '">' + (FEED_LABEL[activeTab]||'') + '</span>' + (a.village ? '<span class="tag tag-village">' + a.village + '</span>' : '') + (cat ? '<span class="tag tag-category">' + cat + '</span>' : '') + langTag + manualTag + '</div>' + titleHtml +
+    (showOrig ? '<div class="article-title-orig">' + a.title + '</div>' : '') +
+
+    '<div class="article-meta">' +
+    (source ? '<span class="article-source">' + source + '</span><span class="article-dot">·</span>' : '') +
+    (date ? '<span class="article-date">' + date + '</span>' : '') +
+    (ago ? '<span class="article-dot">·</span><span class="article-time">' + ago + '</span>' : '') +
+    '</div>' +
+
+    (isVillage && queryText
+    ? '<div class="article-query-wrap"><div class="article-query-label"><span class="article-query-title">Search query — select text to copy</span></div><div class="article-query-text">' + escHtml(queryText) + '</div></div>'
+    : ''
+    ) +
+
+    '<div class="article-footer" style="gap:6px">' +
+    deleteBtn +
+    '<button class="article-copy-btn" data-date="' + date.replace(/"/g,'&quot;') + '" data-title="' + title.replace(/"/g,'&quot;').replace(/'/g,'&#39;') + '" data-link="' + a.link.replace(/"/g,'&quot;') + '" data-cat="' + cat.replace(/"/g,'&quot;') + '" onclick="event.preventDefault();event.stopPropagation();copyArticleBtn(this)">' +
+    '<svg width="11" height="11" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M11 5V3a2 2 0 00-2-2H3a2 2 0 00-2 2v6a2 2 0 002 2h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Copy article</button>' +
+    '</div>' +
+
+  '</' + tag + '>';
 
 function copyForGamma() {
-  var filtered = getFiltered(); if (!filtered.length) return;
+  var filtered = getFiltered();
+  if (!filtered.length) return;
+
   var lines = filtered.map(function(a) {
     var title = (a.title_en && a.title_en !== 'nan') ? a.title_en : a.title;
-    return '[' + (FEED_LABEL[activeTab]||'') + '] ' + formatDate(a.published) + '\n' + title;
+
+    return '[' + (FEED_LABEL[activeTab] || '') + '] ' +
+      formatDate(a.published) + '\n' +
+      title + '\n' +
+      (a.link || '');
   });
-  var header = 'B4 Secure Intelligence Portal — ' + (FEED_LABEL[activeTab]||'') + ' Feed\nGenerated: ' + new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) + '\nTotal: ' + filtered.length + ' articles\n';
+
+  var header =
+    'B4 Secure Intelligence Portal — ' + (FEED_LABEL[activeTab] || '') + ' Feed\n' +
+    'Generated: ' + new Date().toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    }) + '\n' +
+    'Total: ' + filtered.length + ' articles\n';
+
   copyToClipboard(header + '\n' + lines.join('\n\n')).then(function() {
-    var btn = document.getElementById('copy-btn'); btn.textContent = 'Copied!'; btn.classList.add('copied');
-    setTimeout(function() { btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M11 5V3a2 2 0 00-2-2H3a2 2 0 00-2 2v6a2 2 0 002 2h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> Copy'; btn.classList.remove('copied'); }, 2500);
+    var btn = document.getElementById('copy-btn');
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+
+    setTimeout(function() {
+      btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M11 5V3a2 2 0 00-2-2H3a2 2 0 00-2 2v6a2 2 0 002 2h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> Copy';
+      btn.classList.remove('copied');
+    }, 2500);
   });
 }
 
@@ -1537,14 +1658,24 @@ function loadFeed(key, url) {
     if (!r.ok) throw new Error('HTTP ' + r.status);
     return r.json();
   }).then(function(data) {
-    feeds[key] = (data.articles||[]).sort(function(a,b) { return new Date(b.published)-new Date(a.published); });
+    feeds[key] = (data.articles || []).sort(function(a,b) {
+      return new Date(b.published) - new Date(a.published);
+    });
+
+    applyLocalChanges(key);
     feedStatus[key] = 'ok';
   }).catch(function(e) {
-    feeds[key] = []; feedStatus[key] = 'error';
+    feeds[key] = [];
+    applyLocalChanges(key);
+    feedStatus[key] = 'error';
     console.warn('Feed error [' + key + ']:', e.message);
   }).then(function() {
     updateFeedStatus();
-    if (activeTab === key) { buildSidebarFilters(); render(); }
+
+    if (activeTab === key) {
+      buildSidebarFilters();
+      render();
+    }
   });
 }
 
