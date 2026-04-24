@@ -1217,10 +1217,12 @@ function exportFindingsCSV() {
 function getActiveArticles() { return feeds[activeTab] || []; }
 
 function getFiltered() {
+  var deletedIds = getDeletedIds();
   var q = document.getElementById('search').value.toLowerCase();
   var dateFrom = document.getElementById('date-from') ? document.getElementById('date-from').value : '';
   var dateTo   = document.getElementById('date-to')   ? document.getElementById('date-to').value   : '';
   return getActiveArticles().filter(function(a) {
+    if (a._uid && deletedIds.indexOf(a._uid) !== -1) return false;
     if (activeCategory !== 'all') { if ((a.search_name||'').replace(/_/g,' ') !== activeCategory) return false; }
     if (activeTab === 'topic_daily' && dateFrom) { if (new Date(a.published) < new Date(dateFrom)) return false; }
     if (activeTab === 'topic_daily' && dateTo)   { if (new Date(a.published) > new Date(dateTo + 'T23:59:59')) return false; }
@@ -1351,7 +1353,35 @@ function renderDashboard() {
 
 // ── MANUAL ARTICLE ADD ──
 var MANUAL_BIN_KEY = 'b4_manual_articles';
+var DELETED_KEY = 'b4_deleted_articles';
+
+function getDeletedIds() {
+  try { return JSON.parse(localStorage.getItem(DELETED_KEY)||'[]'); } catch(e) { return []; }
+}
+function addDeletedId(id) {
+  var ids = getDeletedIds(); ids.push(id);
+  try { localStorage.setItem(DELETED_KEY, JSON.stringify(ids)); } catch(e) {}
+}
+function removeDeletedId(id) {
+  var ids = getDeletedIds().filter(function(i){ return i !== id; });
+  try { localStorage.setItem(DELETED_KEY, JSON.stringify(ids)); } catch(e) {}
+}
 var MANUAL_JSONBIN_URL = 'https://api.jsonbin.io/v3/b/' + JSONBIN_BIN_ID;
+
+
+function deleteArticle(uid, isManual) {
+  if (isManual) {
+    deleteManualArticle(uid);
+  } else {
+    addDeletedId(uid);
+    render();
+  }
+}
+
+function restoreAllHidden() {
+  try { localStorage.removeItem(DELETED_KEY); } catch(e) {}
+  render();
+}
 
 function loadManualArticles() {
   // Store manual articles in a separate key within the same bin approach
@@ -1367,16 +1397,20 @@ function saveManualArticles(articles) {
 }
 
 function injectManualArticles() {
-  var manual = loadManualArticles();
-  if (!manual.length) return;
-  // Remove any existing manual articles first
-  feeds.village = feeds.village.filter(function(a) { return !a.manual; });
-  // Add manual articles at the top
-  manual.forEach(function(a) { feeds.village.unshift(a); });
+  ['village','topic_daily','topic_weekly','cyber'].forEach(function(tab) {
+    var storageKey = MANUAL_BIN_KEY + '_' + tab;
+    var manual = [];
+    try { manual = JSON.parse(localStorage.getItem(storageKey)||'[]'); } catch(e) {}
+    if (!manual.length) return;
+    feeds[tab] = feeds[tab].filter(function(a) { return !a.manual; });
+    manual.forEach(function(a) { feeds[tab].unshift(a); });
+  });
 }
 
 function openAddModal() {
   document.getElementById('add-modal').classList.remove('hidden');
+  var vWrap = document.getElementById('am-village-wrap');
+  if (vWrap) vWrap.style.display = activeTab === 'village' ? 'flex' : 'none';
   document.getElementById('am-title').focus();
 }
 function closeAddModal() {
@@ -1388,6 +1422,7 @@ function closeAddModal() {
 function submitAddArticle() {
   var title = document.getElementById('am-title').value.trim();
   if (!title) { document.getElementById('am-title').focus(); return; }
+  var tab = activeTab;
   var article = {
     title:       title,
     title_en:    title,
@@ -1397,21 +1432,30 @@ function submitAddArticle() {
     category:    document.getElementById('am-category').value || 'Manual',
     published:   new Date().toISOString(),
     manual:      true,
+    _tab:        tab,
   };
-  var manual = loadManualArticles();
+  article._uid = 'manual_' + Date.now();
+  var storageKey = MANUAL_BIN_KEY + '_' + tab;
+  var manual = [];
+  try { manual = JSON.parse(localStorage.getItem(storageKey)||'[]'); } catch(e) {}
   manual.unshift(article);
-  saveManualArticles(manual);
-  feeds.village.unshift(article);
+  try { localStorage.setItem(storageKey, JSON.stringify(manual)); } catch(e) {}
+  if (feeds[tab]) feeds[tab].unshift(article);
   closeAddModal();
   buildSidebarFilters();
   render();
   updateFeedStatus();
 }
 
-function deleteManualArticle(ts) {
-  var manual = loadManualArticles().filter(function(a) { return a.published !== ts; });
-  saveManualArticles(manual);
-  feeds.village = feeds.village.filter(function(a) { return a.published !== ts; });
+function deleteManualArticle(uid) {
+  ['village','topic_daily','topic_weekly','cyber'].forEach(function(tab) {
+    var storageKey = MANUAL_BIN_KEY + '_' + tab;
+    var manual = [];
+    try { manual = JSON.parse(localStorage.getItem(storageKey)||'[]'); } catch(e) {}
+    manual = manual.filter(function(a) { return a._uid !== uid; });
+    try { localStorage.setItem(storageKey, JSON.stringify(manual)); } catch(e) {}
+    if (feeds[tab]) feeds[tab] = feeds[tab].filter(function(a) { return a._uid !== uid; });
+  });
   buildSidebarFilters();
   render();
   updateFeedStatus();
@@ -1419,7 +1463,8 @@ function deleteManualArticle(ts) {
 
 function updateAddBtn() {
   var btn = document.getElementById('add-article-btn');
-  if (btn) btn.style.display = activeTab === 'village' ? 'flex' : 'none';
+  var showTabs = ['village','topic_daily','topic_weekly','cyber'];
+  if (btn) btn.style.display = showTabs.indexOf(activeTab) !== -1 ? 'flex' : 'none';
 }
 
 function updateDateFilter() {
@@ -1471,7 +1516,9 @@ if (activeTab === 'search_library') {
     var cat = (a.category || a.search_name || '').replace(/_/g,' ');
     var langTag = (a.language && a.language !== 'en-GB' && a.language !== 'en') ? '<span class="tag tag-lang">' + a.language.toUpperCase() + '</span>' : '';
     var isVillage = activeTab === 'village';
+    var isManual = !!a.manual;
     var queryText = a.search_query || '';
+    var uid = a._uid || '';
     var tag = isVillage ? 'div' : 'a';
     var linkAttr = isVillage ? '' : 'href="' + a.link + '" target="_blank" rel="noopener"';
     var titleHtml = isVillage ? '<a href="' + a.link + '" target="_blank" rel="noopener" class="article-title" style="text-decoration:none;color:inherit">' + title + '</a>' : '<div class="article-title">' + title + '</div>';
@@ -1481,7 +1528,7 @@ if (activeTab === 'search_library') {
       (a.village ? '<span class="tag tag-village">' + a.village + '</span>' : '') +
       (cat ? '<span class="tag tag-category">' + cat + '</span>' : '') + langTag + (typeof manualTag !== 'undefined' ? manualTag : '') + (typeof manualDel !== 'undefined' ? manualDel : '') + '</div>' +
       titleHtml + (showOrig ? '<div class="article-title-orig">' + a.title + '</div>' : '') +
-      '<div class="article-meta">' + (source ? '<span class="article-source">' + source + '</span><span class="article-dot">·</span>' : '') + (date ? '<span class="article-date">' + date + '</span>' : '') + (ago ? '<span class="article-dot">·</span><span class="article-time">' + ago + '</span>' : '') + '</div>' +
+      '<div class="article-meta">' + (source ? '<span class="article-source">' + source + '</span><span class="article-dot">·</span>' : '') + (date ? '<span class="article-date">' + date + '</span>' : '') + (ago ? '<span class="article-dot">·</span><span class="article-time">' + ago + '</span>' : '') + (!isVillage ? '<span style="margin-left:auto"><button onclick="deleteArticle(\'' + uid + '\', false)" style="font-size:10px;background:none;border:none;color:#ccc;cursor:pointer;padding:2px 4px" title="Hide">✕</button></span>' : '') + '</div>' +
       (isVillage ? (
         (queryText ? '<div class="article-query-wrap"><div class="article-query-label"><span class="article-query-title">Search query — select text to copy</span></div><div class="article-query-text">' + escHtml(queryText) + '</div></div>' : '') +
         '<div class="article-footer"><button class="article-copy-btn" data-date="' + date.replace(/"/g,'&quot;') + '" data-title="' + title.replace(/"/g,'&quot;').replace(/'/g,'&#39;') + '" data-link="' + a.link.replace(/"/g,'&quot;') + '" data-cat="' + cat.replace(/"/g,'&quot;') + '" onclick="event.preventDefault();copyArticleBtn(this)"><svg width="11" height="11" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M11 5V3a2 2 0 00-2-2H3a2 2 0 00-2 2v6a2 2 0 002 2h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Copy article</button></div>'
@@ -1494,7 +1541,8 @@ function copyForGamma() {
   var filtered = getFiltered(); if (!filtered.length) return;
   var lines = filtered.map(function(a) {
     var title = (a.title_en && a.title_en !== 'nan') ? a.title_en : a.title;
-    return '[' + (FEED_LABEL[activeTab]||'') + '] ' + formatDate(a.published) + '\n' + title;
+    var link = (activeTab === 'topic_daily' || activeTab === 'topic_weekly' || activeTab === 'cyber') ? '\n' + a.link : '';
+    return '[' + (FEED_LABEL[activeTab]||'') + '] ' + formatDate(a.published) + '\n' + title + link;
   });
   var header = 'B4 Secure Intelligence Portal — ' + (FEED_LABEL[activeTab]||'') + ' Feed\nGenerated: ' + new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) + '\nTotal: ' + filtered.length + ' articles\n';
   copyToClipboard(header + '\n' + lines.join('\n\n')).then(function() {
@@ -1537,12 +1585,13 @@ function loadFeed(key, url) {
     if (!r.ok) throw new Error('HTTP ' + r.status);
     return r.json();
   }).then(function(data) {
-    feeds[key] = (data.articles||[]).sort(function(a,b) { return new Date(b.published)-new Date(a.published); });
+    feeds[key] = (data.articles||[]).sort(function(a,b) { return new Date(b.published)-new Date(a.published); }).map(function(a,i){ a._uid = key+'_'+i+'_'+(a.link||'').slice(-20); return a; });
     feedStatus[key] = 'ok';
   }).catch(function(e) {
     feeds[key] = []; feedStatus[key] = 'error';
     console.warn('Feed error [' + key + ']:', e.message);
   }).then(function() {
+    injectManualArticles();
     updateFeedStatus();
     if (activeTab === key) { buildSidebarFilters(); render(); }
   });
@@ -1735,7 +1784,7 @@ if (checkGate()) initWithName();
       <label class="add-modal-label">URL (optional)</label>
       <input class="add-modal-input" id="am-url" type="text" placeholder="https://...">
     </div>
-    <div style="display:flex;gap:10px">
+    <div style="display:flex;gap:10px" id="am-village-wrap">
       <div class="add-modal-field" style="flex:1">
         <label class="add-modal-label">Village</label>
         <select class="add-modal-select" id="am-village">
@@ -1764,8 +1813,11 @@ if (checkGate()) initWithName();
           <option>Protest</option>
           <option>Boycott</option>
           <option>Retail Crime</option>
-          <option>Shoplifting</option>
-          <option>PETA</option>
+          <option>Supply Chain</option>
+          <option>Technology</option>
+          <option>Cyber</option>
+          <option>Fraud</option>
+          <option>Insider Risk</option>
           <option>Other</option>
         </select>
       </div>
